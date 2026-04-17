@@ -819,6 +819,30 @@ export function getFeaturedProducts(): Product[] {
   return CONFIRMED_SLUGS.slice(0, 6).map((s) => PRODUCTS[s]).filter(Boolean)
 }
 
+// ─── Atmospheric Banner Assets ─────────────────────────────────
+// Wide 4:1 banner visuals for product detail page atmosphere.
+// heroBanner: top-of-page hero support (high energy, full opacity)
+// sectionDivider: between sections at lower opacity
+// Per-product banners can override by adding to this map.
+// ────────────────────────────────────────────────────────────────
+
+export const BANNER_ASSETS: Record<string, { heroBanner: string; sectionDivider: string }> = {
+  // Default banners — all products share these unless overridden
+  __default: {
+    heroBanner: '/banners/hero-banner-4x1.png',
+    sectionDivider: '/banners/section-divider-4x1.png',
+  },
+  // Per-product overrides go here when generated:
+  // 'cjc-ipa-10mg': { heroBanner: '/banners/cjc-ipa-hero.png', sectionDivider: '/banners/cjc-ipa-divider.png' },
+}
+
+export function getProductBannerSrc(slug: string, type: 'heroBanner' | 'sectionDivider'): string {
+  if (BANNER_ASSETS[slug]?.[type]) {
+    return BANNER_ASSETS[slug][type]
+  }
+  return BANNER_ASSETS.__default[type]
+}
+
 // ─── Image Resolution ──────────────────────────────────────────
 // Centralized image resolution for all product imagery.
 // Uses PRODUCT_IMAGES map as the source of truth for file paths.
