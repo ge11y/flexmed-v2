@@ -12,7 +12,7 @@ const NAV_LINKS = [
 ];
 
 export function NavBar() {
-  const [scrolled, setScrolled] = useState(false);
+  const [scrolled, setScrolled] = useState(true); // Always dark — not transparent
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
@@ -33,10 +33,9 @@ export function NavBar() {
         alignItems: "center",
         justifyContent: "space-between",
         padding: "0 40px",
-        backgroundColor: scrolled ? "rgba(10, 11, 14, 0.95)" : "transparent",
-        borderBottom: scrolled ? "1px solid var(--border)" : "1px solid transparent",
-        transition: "background-color 0.3s ease, border-color 0.3s ease",
-        backdropFilter: scrolled ? "blur(12px)" : "none",
+        backgroundColor: "rgba(10, 11, 14, 0.97)",
+        borderBottom: "1px solid var(--border)",
+        backdropFilter: "blur(12px)",
       }}
     >
       {/* Logo */}

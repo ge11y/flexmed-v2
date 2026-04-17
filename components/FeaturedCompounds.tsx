@@ -119,20 +119,33 @@ export function FeaturedCompounds() {
                     style={{
                       fontFamily: "var(--font-mono)",
                       fontSize: "10px",
-                      letterSpacing: "0.08em",
+                      fontWeight: 700,
+                      letterSpacing: "0.10em",
                       textTransform: "uppercase",
-                      color:
-                        product.category === "Growth Hormone Research" ? "#A8D8B0" :
-                        product.category === "Metabolic Research" ? "#B0A8E8" :
-                        product.category === "Neuropeptide Research" ? "#E8D0A8" :
-                        product.category === "Telomere Research" ? "#A8D0E8" :
-                        product.category === "Antioxidant Research" ? "#E8A8B0" :
-                        product.category === "Inflammatory Research" ? "#B8E8A8" :
-                        product.category === "Mitochondrial Research" ? "#D0E8A8" :
-                        product.category === "Cellular Health Research" ? "#E8C8A8" :
-                        "#B8D8E8",
-                      display: "block",
+                      padding: "3px 8px",
+                      borderRadius: "9999px",
+                      display: "inline-block",
                       marginBottom: 6,
+                      background:
+                        product.category === "Growth Hormone Research" ? "rgba(100,220,140,0.12)" :
+                        product.category === "Metabolic Research" ? "rgba(160,130,240,0.12)" :
+                        product.category === "Neuropeptide Research" ? "rgba(240,200,120,0.12)" :
+                        product.category === "Telomere Research" ? "rgba(100,190,240,0.12)" :
+                        product.category === "Antioxidant Research" ? "rgba(240,130,160,0.12)" :
+                        product.category === "Inflammatory Research" ? "rgba(140,230,110,0.12)" :
+                        product.category === "Mitochondrial Research" ? "rgba(120,230,130,0.12)" :
+                        product.category === "Cellular Health Research" ? "rgba(240,180,100,0.12)" :
+                        "rgba(130,190,240,0.12)",
+                      color:
+                        product.category === "Growth Hormone Research" ? "#6DD88C" :
+                        product.category === "Metabolic Research" ? "#9A80F0" :
+                        product.category === "Neuropeptide Research" ? "#F0C060" :
+                        product.category === "Telomere Research" ? "#60B8F0" :
+                        product.category === "Antioxidant Research" ? "#F07090" :
+                        product.category === "Inflammatory Research" ? "#88E060" :
+                        product.category === "Mitochondrial Research" ? "#60E070" :
+                        product.category === "Cellular Health Research" ? "#F0A050" :
+                        "#70B8F0",
                     }}
                   >
                     {product.category}
