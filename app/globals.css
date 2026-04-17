@@ -1,20 +1,31 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-/* ─── FlexMed v2 Design Tokens ─────────────────────────────── */
+@custom-variant dark (&:is(.dark *));
 
+/* FlexMed design tokens — dark premium lab theme */
 :root {
-  /* Background */
-  --bg-base: #0A0B0E;
-  --bg-surface: #111318;
-  --bg-elevated: #181B22;
-  --bg-card: #14161C;
-  --bg-card-hover: #1A1D26;
+  /* Core palette */
+  --bg-base: #0A0B0E;           /* near-black */
+  --bg-surface: #111318;         /* card/section surface */
+  --bg-elevated: #181B21;        /* elevated cards */
+  --bg-card: #111318;            /* product cards */
 
-  /* Text */
-  --text-primary: #EEECE8;
-  --text-secondary: #C4BEB6;
-  --text-muted: #8A847E;
-  --text-placeholder: #C4A882;
+  /* Borders */
+  --border: rgba(196, 168, 130, 0.12);
+  --border-strong: rgba(196, 168, 130, 0.25);
+
+  /* Text — pastel tones on dark */
+  --text-primary: #EEECE8;       /* near-white */
+  --text-secondary: #C4BEB6;    /* light gray */
+  --text-muted: #7A746E;        /* muted — 3.3:1 on black */
+  --text-placeholder: #C4A882;  /* amber placeholder markers */
+
+  /* Accent — amber */
+  --amber: #B8A898;
+  --amber-muted: rgba(196, 168, 130, 0.15);
+  --amber-border: rgba(196, 168, 130, 0.25);
 
   /* Pastel accents — visible on dark backgrounds */
   --pastel-lavender: #B8A8E8;
@@ -23,251 +34,155 @@
   --pastel-sky: #88BCE8;
   --pastel-rose: #E8A8A8;
 
-  /* Brand */
-  --amber: #C4A882;
-  --amber-dim: rgba(196, 168, 130, 0.12);
-  --border: rgba(196, 168, 130, 0.10);
-  --border-hover: rgba(196, 168, 130, 0.22);
+  /* Section backgrounds */
+  --section-dark: #0A0B0E;
+  --section-surface: #111318;
+  --section-elevated: #181B21;
 
   /* Status */
-  --status-green: #5A8A6A;
-  --status-blue: #5A7A9A;
-  --status-amber: #A88A5A;
-  --status-muted: #5A5650;
+  --status-green: #7DBB8E;
+  --status-blue: #8AB4D8;
+  --status-amber: #B8A898;
 
-  /* Accent palette — per product */
-  --accent-default: #C4A882;
+  /* Fonts */
+  --font-heading: 'Satoshi', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Satoshi', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
 
-  /* Spacing */
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 16px;
-  --space-lg: 24px;
-  --space-xl: 40px;
-  --space-2xl: 64px;
-  --space-3xl: 96px;
-
-  /* Border radius */
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 10px;
-  --radius-xl: 16px;
-
-  /* Typography */
-  --font-display: 'Cormorant Garamond', Georgia, serif;
-  --font-body: 'DM Sans', system-ui, sans-serif;
-  --font-mono: 'DM Mono', 'Fira Mono', monospace;
+  /* Radius */
+  --radius: 0.5rem;
 }
 
-/* ─── Base Styles ──────────────────────────────────────────── */
-
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html {
-  scroll-behavior: smooth;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-body {
-  background-color: var(--bg-base);
-  color: var(--text-primary);
-  font-family: var(--font-body);
-  font-size: 15px;
-  line-height: 1.6;
-  min-height: 100vh;
-}
-
-/* ─── Typography ──────────────────────────────────────────── */
-
-h1, h2, h3, h4 {
-  font-family: var(--font-display);
+/* Satoshi font face */
+@font-face {
+  font-family: 'Satoshi';
+  font-style: normal;
   font-weight: 400;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
-  color: var(--text-primary);
+  font-display: swap;
+  src: url('/fonts/Satoshi-Regular.otf') format('opentype');
 }
-
-h1 { font-size: clamp(2rem, 5vw, 3.25rem); }
-h2 { font-size: clamp(1.5rem, 3vw, 2.25rem); }
-h3 { font-size: clamp(1.1rem, 2vw, 1.5rem); }
-h4 { font-size: 1.1rem; }
-
-p {
-  color: var(--text-secondary);
-  line-height: 1.7;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-/* ─── Scrollbar ────────────────────────────────────────────── */
-
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: var(--bg-base);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--border-hover);
-}
-
-/* ─── Selection ────────────────────────────────────────────── */
-
-::selection {
-  background: rgba(196, 168, 130, 0.2);
-  color: var(--text-primary);
-}
-
-/* ─── Focus ────────────────────────────────────────────────── */
-
-:focus-visible {
-  outline: 1px solid var(--amber);
-  outline-offset: 2px;
-}
-
-/* ─── Utility Classes ──────────────────────────────────────── */
-
-.container {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 var(--space-lg);
-}
-
-.section {
-  padding: var(--space-3xl) 0;
-}
-
-.label {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.10em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.divider {
-  width: 100%;
-  height: 1px;
-  background: var(--border);
-}
-
-/* ─── Card ─────────────────────────────────────────────────── */
-
-.card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  transition: border-color 0.2s ease, background-color 0.2s ease;
-}
-
-.card:hover {
-  border-color: var(--border-hover);
-  background: var(--bg-card-hover);
-}
-
-/* ─── Button ───────────────────────────────────────────────── */
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: 10px 20px;
-  border-radius: var(--radius-md);
-  font-family: var(--font-body);
-  font-size: 13px;
+@font-face {
+  font-family: 'Satoshi';
+  font-style: normal;
   font-weight: 500;
-  letter-spacing: 0.02em;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: none;
+  font-display: swap;
+  src: url('/fonts/Satoshi-Medium.otf') format('opentype');
+}
+@font-face {
+  font-family: 'Satoshi';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/Satoshi-Bold.otf') format('opentype');
 }
 
-.btn-primary {
-  background: var(--amber);
-  color: #0A0B0E;
-}
-.btn-primary:hover {
-  background: #D4BC98;
-}
-
-.btn-outline {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
-}
-.btn-outline:hover {
-  border-color: var(--amber);
-  color: var(--text-primary);
-}
-
-.btn-ghost {
-  background: transparent;
-  color: var(--text-secondary);
-  padding: 8px 12px;
-}
-.btn-ghost:hover {
-  color: var(--text-primary);
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  body {
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    color: var(--text-primary);
+    line-height: 1.2;
+  }
 }
 
-/* ─── Badge ────────────────────────────────────────────────── */
+/* Utility classes */
+@layer utilities {
+  .fm-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
 
-.badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 8px;
-  border-radius: var(--radius-sm);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  font-weight: 500;
-}
+  .fm-btn-primary {
+    background-color: var(--amber);
+    color: #0A0B0E;
+    border-radius: 9999px;
+    padding: 14px 32px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+  }
+  .fm-btn-primary:hover {
+    background-color: #C4BEB6;
+  }
 
-.badge-amber {
-  background: rgba(196, 168, 130, 0.15);
-  color: var(--amber);
-  border: 1px solid rgba(196, 168, 130, 0.2);
-}
+  .fm-btn-outline {
+    background-color: transparent;
+    color: var(--text-primary);
+    border: 1px solid var(--border-strong);
+    border-radius: 9999px;
+    padding: 13px 32px;
+    font-size: 14px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .fm-btn-outline:hover {
+    border-color: var(--amber);
+    color: var(--amber);
+  }
 
-.badge-green {
-  background: rgba(90, 138, 106, 0.20);
-  color: #7DBB8E;
-  border: 1px solid rgba(90, 138, 106, 0.3);
-}
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 10px;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .badge-green {
+    background: rgba(90, 138, 106, 0.20);
+    color: #7DBB8E;
+    border: 1px solid rgba(90, 138, 106, 0.3);
+  }
+  .badge-blue {
+    background: rgba(90, 122, 154, 0.20);
+    color: #8AB4D8;
+    border: 1px solid rgba(90, 122, 154, 0.3);
+  }
+  .badge-amber {
+    background: rgba(196, 168, 130, 0.15);
+    color: var(--amber);
+    border: 1px solid rgba(196, 168, 130, 0.25);
+  }
+  .badge-muted {
+    background: rgba(90, 86, 80, 0.20);
+    color: #A8A49C;
+    border: 1px solid rgba(90, 86, 80, 0.3);
+  }
 
-.badge-blue {
-  background: rgba(90, 122, 154, 0.20);
-  color: #8AB4D8;
-  border: 1px solid rgba(90, 122, 154, 0.3);
-}
-
-.badge-muted {
-  background: rgba(90, 86, 80, 0.20);
-  color: #A8A49C;
-  border: 1px solid rgba(90, 86, 80, 0.3);
-}
-
-/* ─── Section Labels ──────────────────────────────────────── */
-
-.section-label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--amber);
-  margin-bottom: var(--space-md);
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
 }

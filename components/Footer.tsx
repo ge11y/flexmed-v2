@@ -1,127 +1,128 @@
-import Link from 'next/link'
-import { SITE_SETTINGS, FOOTER_LINKS } from '@/lib/data-site'
+"use client";
+
+import Link from "next/link";
+
+const columnHeadingStyle: React.CSSProperties = {
+  fontSize: "10px",
+  fontWeight: 600,
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
+  color: "var(--text-muted)",
+  fontFamily: "var(--font-mono)",
+  marginBottom: "16px",
+};
+
+function FooterLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      style={{
+        fontSize: "14px",
+        color: "var(--text-secondary)",
+        display: "block",
+        lineHeight: 2,
+        textDecoration: "none",
+        transition: "color 0.2s",
+      }}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLAnchorElement).style.color = "var(--amber)";
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLAnchorElement).style.color = "var(--text-secondary)";
+      }}
+    >
+      {children}
+    </Link>
+  );
+}
 
 export function Footer() {
-  const year = new Date().getFullYear()
-
   return (
     <footer
       style={{
-        borderTop: '1px solid var(--border)',
-        background: 'var(--bg-surface)',
-        paddingTop: '48px',
-        paddingBottom: '32px',
+        backgroundColor: "var(--bg-surface)",
+        borderTop: "1px solid var(--border)",
+        padding: "60px 40px 32px",
       }}
     >
-      <div className="container">
-        {/* Top row */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-            gap: '40px',
-            marginBottom: '48px',
-          }}
-        >
-          {/* Brand column */}
-          <div>
-            <div
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '18px',
-                letterSpacing: '0.06em',
-                color: 'var(--text-primary)',
-                marginBottom: '12px',
-              }}
-            >
-              {SITE_SETTINGS.businessName}
-            </div>
-            <p
-              style={{
-                fontSize: '12px',
-                color: 'var(--text-muted)',
-                lineHeight: 1.7,
-                maxWidth: '200px',
-              }}
-            >
-              Research compounds presented with clarity.
-            </p>
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "48px",
+          alignItems: "flex-start",
+          maxWidth: 1200,
+          margin: "0 auto",
+        }}
+      >
+        {/* Brand column */}
+        <div style={{ flex: "0 0 240px" }}>
+          <div
+            style={{
+              fontFamily: "var(--font-heading)",
+              fontSize: "18px",
+              fontWeight: 700,
+              color: "var(--text-primary)",
+              marginBottom: "12px",
+            }}
+          >
+            <span style={{ color: "var(--amber)" }}>F</span>lexMed
           </div>
-
-          {/* Links */}
-          <div>
-            <div className="label" style={{ marginBottom: '16px' }}>Catalog</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {FOOTER_LINKS.catalog.map((l) => (
-                <Link key={l.href} href={l.href} style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                  {l.label}
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <div className="label" style={{ marginBottom: '16px' }}>Company</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {FOOTER_LINKS.company.map((l) => (
-                <Link key={l.href} href={l.href} style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                  {l.label}
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <div className="label" style={{ marginBottom: '16px' }}>Legal</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {FOOTER_LINKS.legal.map((l) => (
-                <Link key={l.href} href={l.href} style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                  {l.label}
-                </Link>
-              ))}
-            </div>
-          </div>
+          <p
+            style={{
+              fontSize: "13px",
+              color: "var(--text-muted)",
+              lineHeight: 1.6,
+              maxWidth: "200px",
+            }}
+          >
+            Research compounds presented with clarity.
+          </p>
         </div>
 
-        {/* Divider */}
-        <div className="divider" style={{ marginBottom: '24px' }} />
-
-        {/* Bottom row */}
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            gap: '16px',
-          }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-              {SITE_SETTINGS.institutionalEmail}
-            </div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-              {SITE_SETTINGS.businessAddress}
-            </div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-              {SITE_SETTINGS.companyRegistration}
-            </div>
-          </div>
-          <div style={{ fontSize: '11px', color: 'var(--text-muted)', textAlign: 'right', maxWidth: '380px' }}>
-            {SITE_SETTINGS.footerDisclaimer}
-          </div>
+        {/* Catalog */}
+        <div>
+          <p style={columnHeadingStyle}>Catalog</p>
+          <FooterLink href="/products">View All Compounds</FooterLink>
+          <FooterLink href="/products?category=growth-hormone">Growth Hormone</FooterLink>
+          <FooterLink href="/products?category=metabolic">Metabolic Research</FooterLink>
+          <FooterLink href="/products?category=neuropeptide">Neuropeptide</FooterLink>
+          <FooterLink href="/products?category=mitochondrial">Mitochondrial</FooterLink>
         </div>
 
-        <div
-          style={{
-            marginTop: '24px',
-            fontSize: '11px',
-            color: 'var(--text-muted)',
-          }}
-        >
-          &copy; {year} {SITE_SETTINGS.businessName}. All rights reserved.
+        {/* Company */}
+        <div>
+          <p style={columnHeadingStyle}>Company</p>
+          <FooterLink href="/about">About</FooterLink>
+          <FooterLink href="/testing">Testing Standards</FooterLink>
+          <FooterLink href="/contact">Contact</FooterLink>
+          <FooterLink href="/faq">FAQ</FooterLink>
+        </div>
+
+        {/* Legal */}
+        <div>
+          <p style={columnHeadingStyle}>Legal</p>
+          <FooterLink href="/terms">Terms of Service</FooterLink>
+          <FooterLink href="/privacy">Privacy Policy</FooterLink>
+          <FooterLink href="/disclaimer">Research Disclaimer</FooterLink>
         </div>
       </div>
+
+      {/* Copyright bar */}
+      <div
+        style={{
+          borderTop: "1px solid var(--border)",
+          marginTop: "40px",
+          paddingTop: "20px",
+          fontSize: "11px",
+          color: "var(--text-muted)",
+          maxWidth: 1200,
+          margin: "40px auto 0",
+          lineHeight: 1.6,
+        }}
+      >
+        © 2026 FlexMed. All rights reserved. For laboratory research use only — not for human consumption.
+      </div>
     </footer>
-  )
+  );
 }
