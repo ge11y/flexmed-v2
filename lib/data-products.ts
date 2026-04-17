@@ -5,6 +5,32 @@
 
 import type { Product } from './types'
 
+// ─── Image Asset Mapping ──────────────────────────────────────
+// Maps product slugs to their source files from the FLEXMED
+// asset folder. 'front' is required for the catalog card and
+// product detail hero. 'side' is optional alternate angle.
+// 'hoverSpinFrames' can be added later without refactoring.
+// ──────────────────────────────────────────────────────────────
+
+export const PRODUCT_IMAGES: Record<string, { front: string; side?: string; hoverSpinFrames?: string[] }> = {
+  'cagri-5mg':         { front: '/products/cagri-5mg/front.png' },
+  'cjc-ipa-10mg':      { front: '/products/cjc-ipa-10mg/front.png' },
+  'dsip-5mg':          { front: '/products/dsip-5mg/front.png' },
+  'epithalon-10mg':    { front: '/products/epithalon-10mg/front.png', side: '/products/epithalon-10mg/side.png' },
+  'glutathione-600':   { front: '/products/glutathione-600/front.png' },
+  'glutathione-1200':  { front: '/products/glutathione-1200/front.png' },
+  'kpv-10mg':          { front: '/products/kpv-10mg/front.png' },
+  'mots-c-40mg':       { front: '/products/mots-c-40mg/front.png' },
+  'nad-plus-500':       { front: '/products/nad-plus-500/front.png', side: '/products/nad-plus-500/side.png' },
+  'pnc-27-5mg':        { front: '/products/pnc-27-5mg/front.png' },
+  'pt-141-10mg':       { front: '/products/pt-141-10mg/front.png' },
+  'snap-8-10mg':      { front: '/products/snap-8-10mg/front.png', side: '/products/snap-8-10mg/side.png' },
+  'ss-31-50mg':        { front: '/products/ss-31-50mg/front.png' },
+  'thy-a1-10mg':       { front: '/products/thy-a1-10mg/front.png' },
+  'tirz-15mg':         { front: '/products/tirz-15mg/front.png' },
+  'tirz-30mg':         { front: '/products/tirz-30mg/front.png', side: '/products/tirz-30mg/side.png' },
+}
+
 export const PRODUCTS: Record<string, Product> = {
 
   // ─── CONFIRMED — BUILD NOW ───────────────────────────────────
@@ -791,4 +817,26 @@ export function getConfirmedProducts(): Product[] {
 
 export function getFeaturedProducts(): Product[] {
   return CONFIRMED_SLUGS.slice(0, 6).map((s) => PRODUCTS[s]).filter(Boolean)
+}
+
+// ─── Image Resolution ──────────────────────────────────────────
+// Centralized image resolution for all product imagery.
+// Uses PRODUCT_IMAGES map as the source of truth for file paths.
+// Falls back to product.image for any products not yet in the map.
+// hoverSpinFrames come from PRODUCT_IMAGES — add to that map to enable.
+// ──────────────────────────────────────────────────────────────
+
+export function getProductImageSrc(product: Product): string {
+  if (PRODUCT_IMAGES[product.slug]?.front) {
+    return PRODUCT_IMAGES[product.slug].front
+  }
+  return product.image || ''
+}
+
+export function getProductSideSrc(product: Product): string {
+  return PRODUCT_IMAGES[product.slug]?.side || ''
+}
+
+export function getProductHoverSpinFrames(product: Product): string[] {
+  return PRODUCT_IMAGES[product.slug]?.hoverSpinFrames ?? []
 }

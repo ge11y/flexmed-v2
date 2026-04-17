@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { PRODUCTS } from '@/lib/data-products'
+import { PRODUCTS, getProductImageSrc, getProductHoverSpinFrames } from '@/lib/data-products'
 import { getTestingRecordsForProduct } from '@/lib/data-testing'
 import { ProductImage } from '@/components/ProductImage'
 
@@ -134,8 +134,8 @@ export default async function ProductDetailPage({ params }: Props) {
               slug={product.slug}
               displayName={product.displayName}
               accentColorHex={product.accentColorHex}
-              image={product.image}
-              hoverSpinFrames={product.hoverSpinFrames}
+              image={getProductImageSrc(product)}
+              hoverSpinFrames={getProductHoverSpinFrames(product)}
               height={320}
             />
 

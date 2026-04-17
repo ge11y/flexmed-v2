@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import type { Product } from '@/lib/types'
 import { ProductImage } from './ProductImage'
+import { getProductImageSrc, getProductHoverSpinFrames } from '@/lib/data-products'
 
 interface ProductCardProps {
   product: Product
@@ -70,8 +71,8 @@ export function ProductCard({ product }: ProductCardProps) {
           slug={product.slug}
           displayName={product.displayName}
           accentColorHex={product.accentColorHex}
-          image={product.image}
-          hoverSpinFrames={product.hoverSpinFrames}
+          image={getProductImageSrc(product)}
+          hoverSpinFrames={getProductHoverSpinFrames(product)}
           height={140}
         />
 
