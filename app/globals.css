@@ -16,11 +16,11 @@
   --border: rgba(196, 168, 130, 0.12);
   --border-strong: rgba(196, 168, 130, 0.25);
 
-  /* Text — pastel tones on dark */
+  /* Text — visible pastel/warm tones on dark */
   --text-primary: #EEECE8;       /* near-white */
-  --text-secondary: #C4BEB6;    /* light gray */
-  --text-muted: #7A746E;        /* muted — 3.3:1 on black */
-  --text-placeholder: #C4A882;  /* amber placeholder markers */
+  --text-secondary: #D0CCC4;    /* warm light gray — readable body text */
+  --text-muted: #A09890;        /* muted — 4.5:1 on black */
+  --text-placeholder: #D0A870;  /* amber placeholder markers */
 
   /* Accent — amber */
   --amber: #B8A898;

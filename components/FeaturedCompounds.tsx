@@ -121,7 +121,16 @@ export function FeaturedCompounds() {
                       fontSize: "10px",
                       letterSpacing: "0.08em",
                       textTransform: "uppercase",
-                      color: "var(--pastel-mint)",
+                      color:
+                        product.category === "Growth Hormone Research" ? "#A8D8B0" :
+                        product.category === "Metabolic Research" ? "#B0A8E8" :
+                        product.category === "Neuropeptide Research" ? "#E8D0A8" :
+                        product.category === "Telomere Research" ? "#A8D0E8" :
+                        product.category === "Antioxidant Research" ? "#E8A8B0" :
+                        product.category === "Inflammatory Research" ? "#B8E8A8" :
+                        product.category === "Mitochondrial Research" ? "#D0E8A8" :
+                        product.category === "Cellular Health Research" ? "#E8C8A8" :
+                        "#B8D8E8",
                       display: "block",
                       marginBottom: 6,
                     }}
@@ -141,7 +150,7 @@ export function FeaturedCompounds() {
                   <p
                     style={{
                       fontSize: "13px",
-                      color: "var(--text-secondary)",
+                      color: "#D0CCC4",
                       lineHeight: 1.5,
                       marginBottom: 12,
                     }}
