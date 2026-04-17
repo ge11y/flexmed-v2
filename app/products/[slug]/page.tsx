@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { PRODUCTS } from '@/lib/data-products'
 import { getTestingRecordsForProduct } from '@/lib/data-testing'
+import { ProductImage } from '@/components/ProductImage'
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -83,6 +84,43 @@ export default async function ProductDetailPage({ params }: Props) {
             <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{product.displayName}</span>
           </nav>
 
+          {/* Pending Confirmation warning — top of hero */}
+          {product.publishStatus === 'needs_confirmation' && (
+            <div
+              style={{
+                marginBottom: '24px',
+                padding: '12px 16px',
+                background: 'rgba(196, 168, 130, 0.08)',
+                border: '1px solid rgba(196, 168, 130, 0.3)',
+                borderRadius: 'var(--radius-md)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+              }}
+            >
+              <div
+                style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  background: 'var(--amber)',
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '11px',
+                  letterSpacing: '0.06em',
+                  color: 'var(--amber)',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Pending Founder Confirmation — Not Published to Public Catalog
+              </span>
+            </div>
+          )}
+
           <div
             style={{
               display: 'grid',
@@ -91,39 +129,15 @@ export default async function ProductDetailPage({ params }: Props) {
               alignItems: 'start',
             }}
           >
-            {/* Product image */}
-            <div
-              style={{
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border)',
-                borderRadius: 'var(--radius-xl)',
-                height: '320px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden',
-              }}
-            >
-              <div style={{ textAlign: 'center' }}>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '11px',
-                    letterSpacing: '0.1em',
-                    color: product.accentColorHex,
-                    marginBottom: '8px',
-                  }}
-                >
-                  {product.displayName}
-                </div>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: '14px', color: 'var(--text-muted)' }}>
-                  {product.fullName}
-                </div>
-                <div style={{ marginTop: '16px', fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-                  [PRODUCT IMAGE REQUIRED]
-                </div>
-              </div>
-            </div>
+            {/* Product image — hover-spin capable */}
+            <ProductImage
+              slug={product.slug}
+              displayName={product.displayName}
+              accentColorHex={product.accentColorHex}
+              image={product.image}
+              hoverSpinFrames={product.hoverSpinFrames}
+              height={320}
+            />
 
             {/* Product info */}
             <div>
@@ -172,13 +186,21 @@ export default async function ProductDetailPage({ params }: Props) {
               </p>
 
               <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                <Link href="/contact" className="btn btn-primary">
-                  Request Quote
-                </Link>
-                {product.coaStatus === 'available' && (
-                  <a href={product.coaUrl || '#'} className="btn btn-outline" target="_blank" rel="noopener noreferrer">
-                    View CoA
-                  </a>
+                {product.publishStatus === 'needs_confirmation' ? (
+                  <Link href="/admin/catalog" className="btn btn-outline">
+                    View in Admin Catalog
+                  </Link>
+                ) : (
+                  <>
+                    <Link href="/contact" className="btn btn-primary">
+                      Request Quote
+                    </Link>
+                    {product.coaStatus === 'available' && (
+                      <a href={product.coaUrl || '#'} className="btn btn-outline" target="_blank" rel="noopener noreferrer">
+                        View CoA
+                      </a>
+                    )}
+                  </>
                 )}
               </div>
             </div>

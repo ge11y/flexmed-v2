@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import type { Product } from '@/lib/types'
+import { ProductImage } from './ProductImage'
 
 interface ProductCardProps {
   product: Product
@@ -36,8 +37,6 @@ function PublishBadge({ status }: { status: Product['publishStatus'] }) {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const isPlaceholder = !product.image || product.image === `/products/${product.slug}/front.png`
-
   return (
     <Link href={`/products/${product.slug}`} style={{ display: 'block', textDecoration: 'none' }}>
       <article
@@ -66,43 +65,15 @@ export function ProductCard({ product }: ProductCardProps) {
           }}
         />
 
-        {/* Image area */}
-        <div
-          style={{
-            height: '140px',
-            background: 'var(--bg-elevated)',
-            borderRadius: 'var(--radius-md)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: '1px solid var(--border)',
-            overflow: 'hidden',
-          }}
-        >
-          {isPlaceholder ? (
-            <div
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '11px',
-                color: 'var(--text-muted)',
-                letterSpacing: '0.08em',
-                textAlign: 'center',
-                padding: '12px',
-              }}
-            >
-              <div style={{ marginBottom: '4px', color: product.accentColorHex, fontSize: '13px' }}>
-                {product.displayName}
-              </div>
-              <div>[IMAGE REQUIRED]</div>
-            </div>
-          ) : (
-            <img
-              src={product.image}
-              alt={product.displayName}
-              style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '12px' }}
-            />
-          )}
-        </div>
+        {/* Image area — uses ProductImage with hover-spin support */}
+        <ProductImage
+          slug={product.slug}
+          displayName={product.displayName}
+          accentColorHex={product.accentColorHex}
+          image={product.image}
+          hoverSpinFrames={product.hoverSpinFrames}
+          height={140}
+        />
 
         {/* Badges */}
         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
@@ -160,7 +131,13 @@ export function ProductCard({ product }: ProductCardProps) {
           >
             View
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M2.5 6H9.5M6.5 3L9.5 6L6.5 9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+              <path
+                d="M2.5 6H9.5M6.5 3L9.5 6L6.5 9"
+                stroke="currentColor"
+                strokeWidth="1.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </span>
         </div>

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { PRODUCTS, PRODUCT_CATEGORIES } from '@/lib/data-products'
+import { getAllPublicProducts, PRODUCT_CATEGORIES } from '@/lib/data-products'
 import { CategoryFilter } from '@/components/CategoryFilter'
 
 export const metadata: Metadata = {
@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 }
 
 export default function ProductsPage() {
-  const products = Object.values(PRODUCTS).filter((p) => p.publishStatus !== 'on_hold')
+  const products = getAllPublicProducts()
 
   return (
     <div>
@@ -20,7 +20,9 @@ export default function ProductsPage() {
         }}
       >
         <div className="container">
-          <div className="section-label" style={{ marginBottom: '12px' }}>Research Catalog</div>
+          <div className="section-label" style={{ marginBottom: '12px' }}>
+            Research Catalog
+          </div>
           <h1
             style={{
               fontFamily: 'var(--font-display)',
@@ -31,7 +33,14 @@ export default function ProductsPage() {
           >
             Compound catalog
           </h1>
-          <p style={{ fontSize: '15px', color: 'var(--text-secondary)', maxWidth: '480px', lineHeight: 1.7 }}>
+          <p
+            style={{
+              fontSize: '15px',
+              color: 'var(--text-secondary)',
+              maxWidth: '480px',
+              lineHeight: 1.7,
+            }}
+          >
             Browse research-grade compounds by category. All compounds include batch-specific documentation. Use the filters below to navigate by research area.
           </p>
         </div>

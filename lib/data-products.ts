@@ -763,9 +763,22 @@ export const NEEDS_CONFIRMATION_SLUGS = [
 export const ALL_PRODUCT_SLUGS = [...CONFIRMED_SLUGS, ...NEEDS_CONFIRMATION_SLUGS]
 
 export function getProductsByCategory(category: string): Product[] {
-  const all = Object.values(PRODUCTS)
+  const all = Object.values(PRODUCTS).filter((p) => p.publishStatus !== 'on_hold' && p.publishStatus !== 'needs_confirmation')
   if (category === 'All') return all
   return all.filter((p) => p.category === category)
+}
+
+export function getAllPublicProducts(): Product[] {
+  return Object.values(PRODUCTS).filter((p) => p.publishStatus !== 'on_hold' && p.publishStatus !== 'needs_confirmation')
+}
+
+export function getPendingConfirmationProducts(): Product[] {
+  return Object.values(PRODUCTS).filter((p) => p.publishStatus === 'needs_confirmation')
+}
+
+export function getAdminCatalogProducts(): Product[] {
+  // Admin view: includes confirmed + needs_confirmation, excludes only on_hold
+  return Object.values(PRODUCTS).filter((p) => p.publishStatus !== 'on_hold')
 }
 
 export function getProductBySlug(slug: string): Product | undefined {
