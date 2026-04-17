@@ -35,13 +35,15 @@ export function CategoryFilter({ products, categories }: CategoryFilterProps) {
               padding: '6px 14px',
               borderRadius: '20px',
               border: '1px solid',
-              borderColor: active === cat ? 'var(--amber)' : 'var(--border)',
-              background: active === cat ? 'rgba(196, 168, 130, 0.1)' : 'transparent',
-              color: active === cat ? 'var(--amber)' : 'var(--text-secondary)',
+              borderColor: active === cat ? 'var(--amber)' : 'rgba(196,168,130,0.15)',
+              background: active === cat ? 'rgba(196, 168, 130, 0.12)' : 'transparent',
+              color: active === cat ? 'var(--amber)' : 'var(--pastel-sky)',
               fontFamily: 'var(--font-body)',
               fontSize: '12px',
+              fontWeight: 500,
               cursor: 'pointer',
               transition: 'all 0.2s',
+              letterSpacing: '0.01em',
             }}
           >
             {cat}

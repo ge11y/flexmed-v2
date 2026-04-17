@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { PRODUCTS, getProductImageSrc, getProductHoverSpinFrames } from '@/lib/data-products'
+import { PRODUCTS, CONFIRMED_SLUGS, getProductImageSrc, getProductHoverSpinFrames } from '@/lib/data-products'
 import { getTestingRecordsForProduct } from '@/lib/data-testing'
 import { ProductImage } from '@/components/ProductImage'
 
@@ -10,7 +10,7 @@ interface Props {
 }
 
 export async function generateStaticParams() {
-  return Object.keys(PRODUCTS).map((slug) => ({ slug }))
+  return CONFIRMED_SLUGS.map((slug) => ({ slug }))
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -269,7 +269,7 @@ export default async function ProductDetailPage({ params }: Props) {
                         style={{
                           fontFamily: 'var(--font-body)',
                           fontSize: '13px',
-                          color: row.value.startsWith('[') ? 'var(--text-muted)' : 'var(--text-primary)',
+                          color: row.value.startsWith('[') ? 'var(--text-placeholder)' : 'var(--text-primary)',
                         }}
                       >
                         {row.value}
@@ -345,7 +345,7 @@ export default async function ProductDetailPage({ params }: Props) {
                               <span
                                 style={{
                                   color: r.value.includes('[REQUIRED]') || r.value.includes('[PENDING]')
-                                    ? 'var(--text-muted)'
+                                    ? 'var(--text-placeholder)'
                                     : 'var(--text-secondary)',
                                 }}
                               >

@@ -24,7 +24,7 @@ export const PRODUCT_IMAGES: Record<string, { front: string; side?: string; hove
   'nad-plus-500':       { front: '/products/nad-plus-500/front.png', side: '/products/nad-plus-500/side.png' },
   'pnc-27-5mg':        { front: '/products/pnc-27-5mg/front.png' },
   'pt-141-10mg':       { front: '/products/pt-141-10mg/front.png' },
-  'snap-8-10mg':      { front: '/products/snap-8-10mg/front.png', side: '/products/snap-8-10mg/side.png' },
+  'snap-8-10mg':      { front: '/products/snap-8-10mg/front.png' },
   'ss-31-50mg':        { front: '/products/ss-31-50mg/front.png' },
   'thy-a1-10mg':       { front: '/products/thy-a1-10mg/front.png' },
   'tirz-15mg':         { front: '/products/tirz-15mg/front.png' },

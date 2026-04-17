@@ -95,7 +95,7 @@ export function ProductCard({ product }: ProductCardProps) {
           >
             {product.displayName}
           </div>
-          <div className="label" style={{ marginBottom: '8px' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--pastel-peach)', marginBottom: '8px' }}>
             {product.fullName}
           </div>
           <p
@@ -120,7 +120,7 @@ export function ProductCard({ product }: ProductCardProps) {
             borderTop: '1px solid var(--border)',
           }}
         >
-          <span className="label">{product.category}</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--pastel-mint)' }}>{product.category}</span>
           <span
             style={{
               fontSize: '12px',
