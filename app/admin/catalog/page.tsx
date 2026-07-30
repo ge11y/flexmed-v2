@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { getAdminCatalogProducts, getPendingConfirmationProducts, CONFIRMED_SLUGS } from '@/lib/data-products'
+import { getAdminCatalogProducts, getPendingConfirmationProducts } from '@/lib/data-products'
+import { AdminShell } from '@/components/AdminShell'
 import { ProductCard } from '@/components/ProductCard'
 
 export const metadata: Metadata = {
@@ -14,44 +15,14 @@ export default function AdminCatalogPage() {
   const pending = getPendingConfirmationProducts()
 
   return (
-    <div>
-      {/* Page header */}
-      <section
-        style={{
-          padding: '64px 0 48px',
-          borderBottom: '1px solid var(--border)',
-        }}
-      >
-        <div className="container">
-          <div className="section-label" style={{ marginBottom: '12px' }}>
-            Admin View
-          </div>
-          <h1
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 'clamp(2rem, 5vw, 3rem)',
-              fontWeight: 400,
-              marginBottom: '16px',
-            }}
-          >
-            Product catalog — full view
-          </h1>
-          <p
-            style={{
-              fontSize: '15px',
-              color: 'var(--text-secondary)',
-              maxWidth: '520px',
-              lineHeight: 1.7,
-            }}
-          >
-            Internal admin view. Includes confirmed products and products pending founder confirmation. On-hold products are excluded. Products marked &#8220;Pending Confirmation&#8221; are not visible in the public catalog.
-          </p>
-        </div>
-      </section>
-
+    <AdminShell
+      active="/admin/catalog"
+      title="Internal Catalog View"
+      description="Internal admin view for confirmed products and products still pending founder confirmation. On-hold products are excluded. Anything marked pending confirmation is not meant to be visible in the public catalog."
+    >
       {/* Confirmed products */}
-      <section style={{ padding: '48px 0 0' }}>
-        <div className="container">
+      <section style={{ padding: '0' }}>
+        <div>
           <div
             style={{
               display: 'flex',
@@ -82,7 +53,7 @@ export default function AdminCatalogPage() {
       {/* Pending confirmation products */}
       {pending.length > 0 && (
         <section style={{ padding: '48px 0' }}>
-          <div className="container">
+          <div>
             <div
               style={{
                 display: 'flex',
@@ -158,7 +129,7 @@ export default function AdminCatalogPage() {
 
       {/* Back link */}
       <section style={{ padding: '0 0 64px' }}>
-        <div className="container">
+        <div>
           <Link
             href="/products"
             style={{
@@ -174,6 +145,6 @@ export default function AdminCatalogPage() {
           </Link>
         </div>
       </section>
-    </div>
+    </AdminShell>
   )
 }

@@ -2,36 +2,31 @@
 // FlexMed v2 — TypeScript Type Definitions
 // ============================================================
 
-export type ProductSlug =
-  | 'cjc-ipa-10mg'
-  | 'cagri-5mg'
-  | 'dsip-5mg'
-  | 'epithalon-10mg'
-  | 'glutathione-600'
-  | 'glutathione-1200'
-  | 'kpv-10mg'
-  | 'mots-c-40mg'
-  | 'nad-plus-500'
-  | 'pnc-27-5mg'
-  | 'pt-141-10mg'
-  | 'snap-8-10mg'
-  | 'ss-31-50mg'
-  | 'thy-a1-10mg'
-  | 'tirz-15mg'
-  | 'tirz-30mg'
+export type ProductSlug = string
 
-export type ProductStatus = 'in_stock' | 'low_stock' | 'out_of_stock' | 'coming_soon'
+export type ProductStatus = 'in_stock' | 'incoming' | 'out_of_stock'
 export type CoaStatus = 'available' | 'pending' | 'not_available'
 export type PublishStatus = 'confirmed' | 'needs_confirmation' | 'on_hold'
+export type ProductUnit = string
+export type ProductFormatType = string
+
+/**
+ * Risk tier for public visibility.
+ * tier1_everything — higher-scrutiny compounds requiring explicit founder approval
+ *                     before going public even after normal confirmation.
+ * tier2_standard   — normal research catalog compounds.
+ */
+export type RiskTier = 'tier1_everything' | 'tier2_standard'
 
 export interface ProductFormat {
   size: number
-  unit: 'mg'
-  formatType: 'vial'
+  unit: ProductUnit
+  formatType: ProductFormatType
 }
 
 export interface Product {
   slug: string
+  sku?: string
   displayName: string
   fullName: string
   alias: string
@@ -39,8 +34,8 @@ export interface Product {
   researchCategory: string
   structureType: string
   strength: number
-  unit: 'mg'
-  formatType: 'vial'
+  unit: ProductUnit
+  formatType: ProductFormatType
   status: ProductStatus
   coaStatus: CoaStatus
   coaUrl: string
@@ -50,6 +45,25 @@ export interface Product {
   purityPercent: string
   summaryShort: string
   summaryFull: string
+  researchFocusPoints?: string[]
+  listingNotes?: string[]
+  coaNotRequired?: boolean
+  priceVial?: string
+  priceKit?: string
+  inventoryOnHand?: number | null
+  lowStockThreshold?: number | null
+  promoLabel?: string
+  promoDetail?: string
+  promoId?: string
+  promoDiscountType?: 'percentage' | 'bogo' | 'free_shipping' | 'announcement'
+  promoDiscountPercent?: number
+  promoBuyQuantity?: number
+  promoGetQuantity?: number
+  promoDiscountedPrice?: number | null
+  publicVisible?: boolean
+  customProduct?: boolean
+  archived?: boolean
+  updatedAt?: string
   features: string[]
   accentColor: string
   accentColorHex: string
@@ -57,8 +71,19 @@ export interface Product {
   hoverSpinFrames: string[]
   publishStatus: PublishStatus
   needsFounderConfirmation: boolean
+  /**
+   * Risk tier for public visibility.
+   * tier1_everything = higher-scrutiny compounds requiring explicit founder approval
+   *                     before any public-facing presence, even after publishStatus='confirmed'.
+   * tier2_standard   = normal catalog compounds (assumed when absent).
+   */
+  riskTier?: RiskTier
   onHoldReason?: string
   notes?: string
+  variantGroup?: string
+  variantLabel?: string
+  listingAvailabilityLabel?: string
+  listingAvailabilityTone?: 'green' | 'amber' | 'muted' | 'blue'
 }
 
 export interface SiteSettings {
@@ -107,6 +132,8 @@ export interface TestingRecord {
   methodology: string[]
   coaUrl: string
   inlinePreview: boolean
+  /** 'available' = CoA published, link shown; 'pending' = no link */
+  status: 'available' | 'pending'
 }
 
 export interface TestingLab {

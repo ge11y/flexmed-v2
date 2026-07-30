@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
+import { getCatalogDisplayProducts } from "@/lib/data-products";
 
 const CIRCUMFERENCE = 2 * Math.PI * 64; // ≈ 402.12
 
@@ -74,9 +75,11 @@ function CircleStat({ target, label, suffix = "" }: { target: number; label: str
   )
 }
 
+const COMPOUND_COUNT = getCatalogDisplayProducts().length
+
 const STATS = [
-  { target: 16, suffix: "", label: "Research compounds in catalog — all batch-tested" },
-  { target: 97, suffix: "%", label: "Minimum purity threshold for compound release" },
+  { target: COMPOUND_COUNT, suffix: "", label: "Research peptides in catalog — all batch-tested" },
+  { target: 97, suffix: "%", label: "Minimum purity threshold for peptide release" },
   { target: 100, suffix: "%", label: "CoAs published before any batch ships" },
 ]
 
@@ -104,7 +107,7 @@ export function ResearchStats() {
             margin: "0 auto 48px",
           }}
         >
-          Every standard FlexMed applies exists to give institutional buyers the documentation they need for procurement and regulatory review.
+          Every standard FlexMed applies exists to give researchers clean documentation, batch traceability, and consistent COA access.
         </p>
         <div
           style={{

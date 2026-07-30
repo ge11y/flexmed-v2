@@ -6,12 +6,12 @@ const STEPS = [
   {
     number: "1",
     title: "Batch Submission",
-    body: "Each compound batch is received and logged. Unique batch identifiers are assigned and cross-referenced with the compound record before testing begins.",
+    body: "Each peptide batch is received and logged. Unique batch identifiers are assigned and cross-referenced with the peptide record before testing begins.",
     icon: "01",
   },
   {
     number: "2",
-    title: "Independent HPLC + MS Analysis",
+    title: "Third-Party HPLC + MS Analysis",
     body: "Every batch is tested by an ISO-accredited third-party laboratory. HPLC quantifies purity; MS confirms molecular identity. Results are reviewed before release.",
     icon: "02",
   },
@@ -44,7 +44,7 @@ export function TestingWorkflow() {
             marginBottom: 12,
           }}
         >
-          Testing & Verification
+          COA Testing
         </p>
 
         {/* Heading */}
@@ -134,7 +134,7 @@ export function TestingWorkflow() {
             className="fm-btn-outline"
             style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
           >
-            View Testing Standards
+            View COA Testing
           </a>
         </div>
       </div>

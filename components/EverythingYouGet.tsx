@@ -12,20 +12,12 @@ const CARDS = [
     text: "Each product page publishes the testing lab, methodology, purity result, and batch CoA before any order is fulfilled.",
   },
   {
-    label: "Independent Testing",
+    label: "Third-Party Testing",
     text: "All testing is conducted by ISO-accredited third-party laboratories with no commercial relationship to FlexMed.",
   },
   {
-    label: "Quote-First Model",
-    text: "No pricing displayed in the catalog. Quotes are issued based on current batch availability, quantity, and institutional credentials.",
-  },
-  {
-    label: "Standardized Labeling",
-    text: "All compounds use a consistent container and label format — compound name, strength, batch, date, purity from CoA.",
-  },
-  {
-    label: "Institutional Verification",
-    text: "All accounts are reviewed against institutional credentials before first order. No individual consumer sales.",
+    label: "Verified Records",
+    text: "Product details, pricing, inventory status, and documentation are reviewed before orders are fulfilled.",
   },
   {
     label: "Documentation-First",
@@ -65,7 +57,7 @@ export function EverythingYouGet() {
             marginBottom: 48,
           }}
         >
-          What FlexMed requires before any compound reaches procurement
+          What FlexMed requires before any peptide reaches procurement
         </p>
 
         <div

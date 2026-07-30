@@ -12,7 +12,7 @@ export function AnnouncementBar() {
         letterSpacing: "0.04em",
       }}
     >
-      <span style={{ color: "var(--amber)" }}>Research use only.</span> For verified institutional buyers.
+      <span style={{ color: "var(--amber)" }}>Research use only.</span> For scientific and laboratory research purposes.
     </div>
   );
 }

@@ -40,9 +40,9 @@ export function Footer() {
   return (
     <footer
       style={{
-        backgroundColor: "var(--bg-surface)",
+        backgroundColor: "var(--bg-base)",
         borderTop: "1px solid var(--border)",
-        padding: "60px 40px 32px",
+        padding: "56px 40px 32px",
       }}
     >
       <div
@@ -66,7 +66,7 @@ export function Footer() {
               marginBottom: "12px",
             }}
           >
-            <span style={{ color: "var(--amber)" }}>F</span>lexMed
+            FlexMed
           </div>
           <p
             style={{
@@ -76,25 +76,24 @@ export function Footer() {
               maxWidth: "200px",
             }}
           >
-            Research compounds presented with clarity.
+            Research peptides presented with clarity.
           </p>
         </div>
 
         {/* Catalog */}
         <div>
           <p style={columnHeadingStyle}>Catalog</p>
-          <FooterLink href="/products">View All Compounds</FooterLink>
-          <FooterLink href="/products?category=growth-hormone">Growth Hormone</FooterLink>
-          <FooterLink href="/products?category=metabolic">Metabolic Research</FooterLink>
-          <FooterLink href="/products?category=neuropeptide">Neuropeptide</FooterLink>
-          <FooterLink href="/products?category=mitochondrial">Mitochondrial</FooterLink>
+          <FooterLink href="/products?group=peptides">View All Peptides</FooterLink>
+          <FooterLink href="/products?group=bio_regulators">View Bio Regulators</FooterLink>
+          <FooterLink href="/testing">Browse COA Testing</FooterLink>
         </div>
 
         {/* Company */}
         <div>
           <p style={columnHeadingStyle}>Company</p>
           <FooterLink href="/about">About</FooterLink>
-          <FooterLink href="/testing">Testing Standards</FooterLink>
+          <FooterLink href="/vial-cases">Vial Cases</FooterLink>
+          <FooterLink href="/affiliate">Affiliate</FooterLink>
           <FooterLink href="/contact">Contact</FooterLink>
           <FooterLink href="/faq">FAQ</FooterLink>
         </div>
@@ -105,6 +104,7 @@ export function Footer() {
           <FooterLink href="/terms">Terms of Service</FooterLink>
           <FooterLink href="/privacy">Privacy Policy</FooterLink>
           <FooterLink href="/disclaimer">Research Disclaimer</FooterLink>
+          <FooterLink href="/shipping-returns">Shipping &amp; Returns</FooterLink>
         </div>
       </div>
 

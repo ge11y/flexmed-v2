@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { NavBar } from "@/components/NavBar";
-import { Footer } from "@/components/Footer";
+import { cookies } from "next/headers";
+import { AppChrome } from "@/components/AppChrome";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -9,32 +9,33 @@ export const metadata: Metadata = {
     template: "%s | FlexMed",
   },
   description:
-    "Research-grade peptides for verified institutional laboratories. Every batch third-party tested. Every Certificate of Analysis published before procurement.",
+    "Research-grade peptides and bio regulators with third-party testing, batch transparency, and published certificate-of-analysis documentation.",
   robots: { index: false, follow: false },
   icons: {
-    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230A0B0E'/><text y='24' x='4' font-size='22' fill='%23B8A898'>F</text></svg>",
+    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230B0C10'/><text y='24' x='4' font-size='22' fill='%236882C4'>F</text></svg>",
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const hasGatewayAcceptance =
+    (await cookies()).get("flexmed_research_gateway_v2")?.value === "accepted";
+
   return (
     <html lang="en" className="dark">
       <body
         style={{
-          background: "#0A0B0E",
+          background: "#071A3D",
           minHeight: "100vh",
           display: "flex",
           flexDirection: "column",
           margin: 0,
         }}
       >
-        <NavBar />
-        <main style={{ flex: 1 }}>{children}</main>
-        <Footer />
+        <AppChrome hasGatewayAcceptance={hasGatewayAcceptance}>{children}</AppChrome>
       </body>
     </html>
   );

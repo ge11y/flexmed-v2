@@ -1,6 +1,10 @@
 'use client'
 
+import { useState } from 'react'
+
 export function InquiryForm() {
+  const [status, setStatus] = useState<'idle' | 'sent'>('idle')
+
   return (
     <form
       style={{
@@ -15,22 +19,22 @@ export function InquiryForm() {
       onSubmit={(e) => {
         e.preventDefault()
         const form = e.currentTarget
-        const data = Object.fromEntries(new FormData(form))
-        alert(`Inquiry submitted (demo): ${JSON.stringify(data, null, 2)}`)
+        setStatus('sent')
+        form.reset()
       }}
     >
-      <FormField label="Institutional Name *" required placeholder="[REQUIRED]" />
-      <FormField label="Contact Name *" required placeholder="[REQUIRED]" />
-      <FormField label="Institutional Email *" type="email" required placeholder="[REQUIRED]" />
-      <FormField label="Phone (optional)" type="tel" placeholder="[OPTIONAL]" />
+      <FormField label="Research Organization or Lab *" required placeholder="Organization, lab, or account name" />
+      <FormField label="Contact Name *" required placeholder="Your name" />
+      <FormField label="Email *" type="email" required placeholder="name@example.com" />
+      <FormField label="Phone (optional)" type="tel" placeholder="Best callback number" />
 
       <div>
         <div className="label" style={{ marginBottom: '8px', fontSize: '10px' }}>
-          Research Application (optional)
+          Research Context (optional)
         </div>
         <textarea
           name="researchApplication"
-          placeholder="Brief description of your research application or project..."
+          placeholder="Brief description of the research context or documentation request..."
           rows={3}
           style={textareaStyle}
         />
@@ -38,10 +42,10 @@ export function InquiryForm() {
 
       <div>
         <div className="label" style={{ marginBottom: '8px', fontSize: '10px' }}>
-          Compounds of Interest
+          Catalog Items of Interest
         </div>
         <textarea
-          name="compounds"
+          name="peptides"
           placeholder="e.g., CJC/Ipa 10mg, NAD+ 500mg..."
           rows={2}
           style={textareaStyle}
@@ -50,12 +54,12 @@ export function InquiryForm() {
 
       <div>
         <div className="label" style={{ marginBottom: '8px', fontSize: '10px' }}>
-          Approximate Quantity
+          Notes
         </div>
         <input
           name="quantity"
           type="text"
-          placeholder="e.g., 10 vials per compound..."
+          placeholder="Anything you'd like FlexMed to know..."
           style={inputStyle}
         />
       </div>
@@ -65,11 +69,29 @@ export function InquiryForm() {
         className="btn btn-primary"
         style={{ justifyContent: 'center', padding: '14px', marginTop: '8px' }}
       >
-        Submit Research Inquiry
+        Send Message
       </button>
 
+      {status === 'sent' ? (
+        <div
+          role="status"
+          style={{
+            borderRadius: '14px',
+            border: '1px solid rgba(2, 122, 72, 0.18)',
+          background: 'rgba(99, 201, 212, 0.12)',
+          color: '#FFFFFF',
+          padding: '12px 14px',
+            fontSize: '13px',
+            lineHeight: 1.6,
+            textAlign: 'center',
+          }}
+        >
+          Message received. FlexMed will follow up as soon as possible.
+        </div>
+      ) : null}
+
       <p style={{ fontSize: '11px', color: 'var(--text-muted)', textAlign: 'center', lineHeight: 1.6 }}>
-        By submitting this form you confirm that you are submitting from an institutional email address or on behalf of a recognized research institution.
+        By sending this form you confirm that your request relates to scientific or laboratory research use only.
       </p>
     </form>
   )

@@ -1,125 +1,116 @@
+import Link from 'next/link'
 import type { Metadata } from 'next'
+import { ClipboardCheck, FlaskConical, PackageCheck, ShieldCheck } from 'lucide-react'
+import { getLiveCatalogProducts } from '@/lib/catalog-live'
 
 export const metadata: Metadata = {
   title: 'About',
-  description: 'About FlexMed — research-first presentation, packaging consistency, and testing documentation.',
+  description: 'About FlexMed — research-first cataloging, third-party testing, and live documentation.',
 }
 
-export default function AboutPage() {
+export const dynamic = 'force-dynamic'
+
+function formatCollection(value: string) {
+  return value.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
+}
+
+export default async function AboutPage() {
+  const products = await getLiveCatalogProducts()
+  const visibleProducts = products.filter((product) => product.publicVisible !== false)
+  const collections = Array.from(
+    new Set(visibleProducts.map((product) => product.category || product.researchCategory).filter(Boolean)),
+  ).slice(0, 6)
+
+  const process = [
+    {
+      title: 'Cataloged for research',
+      body: 'Listings focus on product identity, format, strength, availability, and documentation status without consumer-use claims.',
+      icon: FlaskConical,
+    },
+    {
+      title: 'Third-party testing workflow',
+      body: 'Batch documentation is maintained separately from marketing copy so researchers can review source records clearly.',
+      icon: ShieldCheck,
+    },
+    {
+      title: 'Live inventory source',
+      body: 'Availability and product data are maintained from live catalog records, so public listings stay current.',
+      icon: PackageCheck,
+    },
+    {
+      title: 'CoA-aware presentation',
+      body: 'Published CoAs are linked where available, while products marked as not requiring CoA documentation avoid pending labels.',
+      icon: ClipboardCheck,
+    },
+  ]
+
   return (
-    <div>
-      {/* Hero */}
-      <section style={{ padding: '64px 0 48px', borderBottom: '1px solid var(--border)' }}>
+    <main className="storefront-blue-shell" style={{ minHeight: '100vh' }}>
+      <section
+        className="products-page-header-visual"
+        style={{
+          padding: 'calc(56px + var(--promo-banner-offset, 0px)) 0 30px',
+          borderBottom: '1px solid var(--border)',
+          position: 'relative',
+        }}
+      >
         <div className="container">
-          <div className="section-label" style={{ marginBottom: '12px' }}>About FlexMed</div>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem, 5vw, 3rem)', fontWeight: 400, marginBottom: '16px', maxWidth: '640px' }}>
-            Built around research procurement standards.
-          </h1>
-          <p style={{ fontSize: '15px', color: 'var(--text-secondary)', maxWidth: '520px', lineHeight: 1.7 }}>
-            FlexMed is a research compound catalog designed for institutional buyers who need batch-verified documentation before they procure.
-          </p>
-        </div>
-      </section>
-
-      {/* Content */}
-      <section className="section">
-        <div className="container">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '48px', maxWidth: '720px' }}>
-            {/* Research-first */}
-            <div>
-              <div className="section-label" style={{ marginBottom: '12px' }}>Research-First Presentation</div>
-              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 400, marginBottom: '16px' }}>
-                Catalog entries, not marketing pages.
-              </h2>
-              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.8, marginBottom: '16px' }}>
-                Every compound in the FlexMed catalog is presented as a research reference entry — not a product sales page. There are no usage instructions, no therapeutic claims, and no dosage guidance. The catalog exists to support procurement decisions at research institutions.
-              </p>
-              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.8 }}>
-                Compound descriptions are drawn from established scientific literature and are classified by research area. The goal is to make the catalog useful to researchers who need to identify, verify, and document the compounds they intend to use in their work.
-              </p>
-            </div>
-
-            {/* Packaging */}
-            <div>
-              <div className="section-label" style={{ marginBottom: '12px' }}>Packaging &amp; Consistency</div>
-              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 400, marginBottom: '16px' }}>
-                Universal container system.
-              </h2>
-              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.8, marginBottom: '16px' }}>
-                All compounds in the FlexMed catalog are labeled using a standardized format. The container family is consistent across the full product range — only the label text and accent color change by compound. This is a deliberate design decision that reflects the operational standardization FlexMed applies to its fulfillment process.
-              </p>
-              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.8 }}>
-                Label content per compound includes: compound name, format and strength, batch/lot number, date of manufacture, storage conditions, and purity (from the batch CoA). No claims, no directions, no medical language.
-              </p>
-            </div>
-
-            {/* Testing */}
-            <div>
-              <div className="section-label" style={{ marginBottom: '12px' }}>Testing &amp; Documentation</div>
-              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 400, marginBottom: '16px' }}>
-                Independent verification, batch by batch.
-              </h2>
-              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.8, marginBottom: '16px' }}>
-                Every compound batch is tested by an independent, ISO-accredited third-party laboratory before it is released. Testing is not self-certified. The laboratory has no commercial relationship with FlexMed.
-              </p>
-              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.8 }}>
-                Testing results — identity, purity, molecular weight — are published on the relevant product page and in the Testing section before any order is fulfilled. If a CoA is not available for a batch, that batch is not available for order.
-              </p>
-            </div>
-
-            {/* Values */}
-            <div>
-              <div className="section-label" style={{ marginBottom: '16px' }}>Operational Standards</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-                {[
-                  { title: 'Institutional verification', body: 'All orders are reviewed against institutional credentials before acceptance.' },
-                  { title: 'Documentation-first', body: 'Published CoAs precede all product availability. No exceptions.' },
-                  { title: 'No self-certification', body: 'Testing is conducted by independent, accredited third-party laboratories.' },
-                  { title: 'Quote-first model', body: 'No pricing displayed in the catalog. Quotes are issued based on current batch availability.' },
-                ].map((item) => (
-                  <div
-                    key={item.title}
-                    style={{
-                      padding: '20px',
-                      background: 'var(--bg-card)',
-                      border: '1px solid var(--border)',
-                      borderRadius: 'var(--radius-lg)',
-                    }}
-                  >
-                    <div style={{ fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '8px' }}>
-                      {item.title}
-                    </div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                      {item.body}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Placeholder team section */}
-            <div>
-              <div className="section-label" style={{ marginBottom: '12px' }}>Team</div>
-              <div
-                style={{
-                  padding: '32px',
-                  background: 'var(--bg-card)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius-lg)',
-                  textAlign: 'center',
-                }}
-              >
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: '16px', color: 'var(--text-primary)', marginBottom: '8px' }}>
-                  [FOUNDER OR TEAM DETAILS REQUIRED]
-                </div>
-                <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-                  [TITLE REQUIRED]
-                </div>
-              </div>
+          <div>
+            <div className="section-label" style={{ marginBottom: '12px' }}>About FlexMed</div>
+            <h1 style={{ fontSize: 'clamp(1.9rem, 3.4vw, 3rem)', lineHeight: 1.06, fontWeight: 900, margin: 0, maxWidth: '680px', color: '#FFFFFF', textWrap: 'balance' }}>
+              Research catalog structure with live documentation discipline.
+            </h1>
+            <p style={{ fontSize: '15px', color: 'rgba(246,250,255,0.9)', maxWidth: '620px', lineHeight: 1.7, margin: '16px 0 0' }}>
+              FlexMed is built as a research-use storefront. The public site is designed to keep product families, strengths, availability, and CoA status easy to review while keeping the language centered on laboratory research.
+            </p>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '24px' }}>
+              <Link className="fm-btn-primary" href="/products?group=peptides">Browse catalog</Link>
+              <Link className="fm-btn-outline" href="/coa">View CoA library</Link>
             </div>
           </div>
         </div>
       </section>
-    </div>
+
+      <section className="catalog-shopping-section-visual" style={{ padding: '34px 0 72px', position: 'relative' }}>
+        <div className="container" style={{ display: 'grid', gap: '34px' }}>
+          {collections.length > 0 ? (
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <strong style={{ color: '#FFFFFF' }}>Live groups:</strong>
+              {collections.map((collection) => (
+                <span key={collection} className="badge badge-blue">{formatCollection(collection)}</span>
+              ))}
+            </div>
+          ) : null}
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '14px' }}>
+            {process.map((item) => {
+              const Icon = item.icon
+              return (
+                <article key={item.title} className="card" style={{ padding: '22px', display: 'grid', gap: '12px' }}>
+                  <Icon size={24} color="#63c9d4" aria-hidden="true" />
+                  <h2 style={{ margin: 0, color: '#FFFFFF', fontSize: '18px', fontWeight: 850 }}>{item.title}</h2>
+                  <p style={{ margin: 0, color: 'rgba(246,250,255,0.88)', lineHeight: 1.7, fontSize: '14px' }}>{item.body}</p>
+                </article>
+              )
+            })}
+          </div>
+
+          <div className="card" style={{ padding: '26px', display: 'grid', gridTemplateColumns: 'minmax(0, 0.9fr) minmax(280px, 1.1fr)', gap: '28px', alignItems: 'start' }}>
+            <div>
+              <div className="section-label" style={{ marginBottom: '12px' }}>Operating Standard</div>
+              <h2 style={{ margin: 0, color: '#FFFFFF', fontSize: '24px', fontWeight: 900 }}>Clear research-use boundaries.</h2>
+            </div>
+            <div style={{ display: 'grid', gap: '14px', color: 'rgba(246,250,255,0.9)', lineHeight: 1.75, fontSize: '14px' }}>
+              <p style={{ margin: 0 }}>
+                Product pages are written as catalog entries rather than marketing pages. They do not include therapeutic claims, dosage guidance, or human-use instructions.
+              </p>
+              <p style={{ margin: 0 }}>
+                The catalog is intended to help researchers identify product families, compare available strengths, review availability, and access documentation where applicable.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
   )
 }

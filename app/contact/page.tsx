@@ -1,114 +1,97 @@
 import type { Metadata } from 'next'
+import { Mail, MessageSquareText, PackageSearch } from 'lucide-react'
 import { SITE_SETTINGS } from '@/lib/data-site'
+import { getLiveCatalogProducts } from '@/lib/catalog-live'
 import { InquiryForm } from '@/components/InquiryForm'
 
 export const metadata: Metadata = {
   title: 'Contact',
-  description: 'Submit an institutional inquiry or quote request to FlexMed.',
+  description: 'Contact FlexMed for catalog questions, availability updates, and documentation requests.',
 }
 
-export default function ContactPage() {
+export const dynamic = 'force-dynamic'
+
+export default async function ContactPage() {
+  const products = await getLiveCatalogProducts()
+  const visibleProducts = products.filter((product) => product.publicVisible !== false)
+  const supportItems = [
+    {
+      label: 'Email support',
+      value: SITE_SETTINGS.institutionalEmail,
+      note: 'Catalog questions, availability checks, documentation requests, and account support.',
+      icon: Mail,
+      href: `mailto:${SITE_SETTINGS.institutionalEmail}`,
+    },
+    {
+      label: 'Live catalog',
+      value: `${visibleProducts.length} active listings`,
+      note: 'Product records are pulled from the shared live catalog data.',
+      icon: PackageSearch,
+    },
+  ]
+
   return (
-    <div>
-      {/* Hero */}
-      <section style={{ padding: '64px 0 48px', borderBottom: '1px solid var(--border)' }}>
-        <div className="container">
-          <div className="section-label" style={{ marginBottom: '12px' }}>Contact</div>
-          <h1
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 'clamp(2rem, 5vw, 3rem)',
-              fontWeight: 400,
-              marginBottom: '16px',
-            }}
-          >
-            Institutional inquiries.
-          </h1>
-          <p style={{ fontSize: '15px', color: 'var(--text-secondary)', maxWidth: '480px', lineHeight: 1.7 }}>
-            Submit an inquiry to receive a formal quote. All inquiries are reviewed by our institutional accounts team.
-            Response within 1–2 business days.
-          </p>
-        </div>
-      </section>
-
-      {/* Content */}
-      <section className="section">
-        <div className="container">
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-              gap: '48px',
-              maxWidth: '900px',
-            }}
-          >
-            {/* Contact info */}
-            <div>
-              <div className="section-label" style={{ marginBottom: '20px' }}>Contact Information</div>
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '20px',
-                  background: 'var(--bg-card)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius-lg)',
-                  padding: '24px',
-                }}
-              >
-                {[
-                  {
-                    label: 'Institutional Email',
-                    value: SITE_SETTINGS.institutionalEmail,
-                    note: 'For inquiries and quote requests',
-                  },
-                  {
-                    label: 'Business Address',
-                    value: SITE_SETTINGS.businessAddress,
-                    note: 'Primary operating location',
-                  },
-                  {
-                    label: 'Company Registration',
-                    value: SITE_SETTINGS.companyRegistration,
-                    note: 'Registered business details',
-                  },
-                ].map((item) => (
-                  <div key={item.label}>
-                    <div className="label" style={{ marginBottom: '4px', fontSize: '10px' }}>
-                      {item.label}
-                    </div>
-                    <div
-                      style={{
-                        fontFamily: 'var(--font-body)',
-                        fontSize: '14px',
-                        color: item.value.includes('[') ? 'var(--text-muted)' : 'var(--text-primary)',
-                        marginBottom: '4px',
-                      }}
-                    >
-                      {item.value}
-                    </div>
-                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{item.note}</div>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ marginTop: '24px' }}>
-                <div className="section-label" style={{ marginBottom: '12px' }}>Response Time</div>
-                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
-                  All inquiries are reviewed by our institutional accounts team. Typical response time is 1–2 business days.
-                  For urgent procurement needs, please indicate this in your inquiry.
-                </p>
-              </div>
-            </div>
-
-            {/* Inquiry form — client component */}
-            <div>
-              <div className="section-label" style={{ marginBottom: '20px' }}>Submit Inquiry</div>
-              <InquiryForm />
-            </div>
+    <main className="storefront-blue-shell" style={{ minHeight: '100vh' }}>
+      <section
+        className="products-page-header-visual"
+        style={{
+          padding: 'calc(56px + var(--promo-banner-offset, 0px)) 0 30px',
+          borderBottom: '1px solid var(--border)',
+          position: 'relative',
+        }}
+      >
+        <div className="container" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(260px, 360px)', gap: '24px', alignItems: 'start' }}>
+          <div>
+            <div className="section-label" style={{ marginBottom: '12px' }}>Contact</div>
+            <h1 style={{ fontSize: 'clamp(1.9rem, 3.4vw, 3rem)', lineHeight: 1.06, fontWeight: 900, margin: 0, color: '#FFFFFF', textWrap: 'balance' }}>
+              Questions, documentation requests, and catalog support.
+            </h1>
+            <p style={{ fontSize: '15px', color: 'rgba(246,250,255,0.9)', maxWidth: '620px', lineHeight: 1.7, margin: '16px 0 0' }}>
+              Send FlexMed the product name, strength, order number, or documentation request you need help with. Typical response time is 1–2 business days.
+            </p>
+          </div>
+          <div className="card" style={{ padding: '16px', display: 'grid', gap: '10px' }}>
+            <MessageSquareText size={26} color="#63c9d4" aria-hidden="true" />
+            <strong style={{ color: '#FFFFFF' }}>Best message details</strong>
+            <p style={{ margin: 0, color: 'rgba(246,250,255,0.84)', fontSize: '14px', lineHeight: 1.65 }}>
+              Include product names, strengths, order numbers, or CoA details so the team can respond faster.
+            </p>
           </div>
         </div>
       </section>
-    </div>
+
+      <section className="catalog-shopping-section-visual" style={{ padding: '34px 0 72px', position: 'relative' }}>
+        <div className="container" style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 0.85fr) minmax(320px, 1.15fr)', gap: '28px', alignItems: 'start' }}>
+          <aside style={{ display: 'grid', gap: '14px' }}>
+            {supportItems.map((item) => {
+              const Icon = item.icon
+              const content = (
+                <article className="card" style={{ padding: '20px', display: 'grid', gap: '10px' }}>
+                  <Icon size={22} color="#63c9d4" aria-hidden="true" />
+                  <div>
+                    <div className="section-label" style={{ marginBottom: '6px' }}>{item.label}</div>
+                    <strong style={{ color: '#FFFFFF', fontSize: '16px' }}>{item.value}</strong>
+                  </div>
+                  <p style={{ margin: 0, color: 'rgba(246,250,255,0.84)', fontSize: '13px', lineHeight: 1.65 }}>{item.note}</p>
+                </article>
+              )
+              return item.href ? (
+                <a key={item.label} href={item.href} style={{ textDecoration: 'none' }}>{content}</a>
+              ) : (
+                <div key={item.label}>{content}</div>
+              )
+            })}
+          </aside>
+
+          <section>
+            <div style={{ marginBottom: '16px' }}>
+              <div className="section-label" style={{ marginBottom: '8px' }}>Send Message</div>
+              <h2 style={{ margin: 0, color: '#FFFFFF', fontSize: '24px', fontWeight: 900 }}>Tell us what you need.</h2>
+            </div>
+            <InquiryForm />
+          </section>
+        </div>
+      </section>
+    </main>
   )
 }

@@ -1,45 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { FAQ_ITEMS } from "@/lib/data-faq";
 
 /* ------------------------------------------------------------------ */
-/* FAQSection — accordion with FlexMed research FAQ items             */
+/* FAQSection — accordion sourced from lib/data-faq.ts                 */
 /* ------------------------------------------------------------------ */
-
-const FAQ_ITEMS = [
-  {
-    q: "What is FlexMed's target buyer?",
-    a: "FlexMed supplies verified institutional buyers — university laboratories, contract research organizations (CROs), and licensed research facilities. We do not sell to individual consumers or unverified accounts.",
-  },
-  {
-    q: "How does FlexMed verify compound identity and purity?",
-    a: "Every batch undergoes HPLC (High-Performance Liquid Chromatography) for purity quantification and MS (Mass Spectrometry) for molecular identity confirmation. Both are conducted by independent ISO-accredited third-party laboratories.",
-  },
-  {
-    q: "When is a CoA required before an order?",
-    a: "Always. A Certificate of Analysis for the specific batch must be published on the product page before that batch is made available for order. If no CoA is published, the batch is not available — no exceptions.",
-  },
-  {
-    q: "How are institutional accounts verified?",
-    a: "New accounts are reviewed against institutional credentials (lab affiliation, research license, or institutional email domain). FlexMed reserves the right to request documentation before approving any account.",
-  },
-  {
-    q: "What is the quote-first model?",
-    a: "FlexMed does not display pricing in the catalog. Quotes are issued based on confirmed batch availability, quantity, and institutional account status. This ensures accurate pricing reflecting current stock.",
-  },
-  {
-    q: "What purity threshold does FlexMed require?",
-    a: "A minimum of 97% purity via HPLC is required for any batch to be released. Higher thresholds may apply per compound specification.",
-  },
-  {
-    q: "Are your compounds FDA-approved?",
-    a: "No. FlexMed compounds are sold for laboratory research purposes only. They are not FDA-approved, not for human use, and not for clinical or diagnostic applications.",
-  },
-  {
-    q: "What does 'batch traceability' mean?",
-    a: "Each batch has a unique identifier (e.g., FM-CJC-IPA-001) that links directly to its published CoA, testing date, testing lab, purity result, and methodology — making audit trails straightforward for institutional procurement.",
-  },
-];
 
 export function FAQSection() {
   const [openItems, setOpenItems] = useState<Set<number>>(new Set([0]));
@@ -74,7 +40,7 @@ export function FAQSection() {
             marginBottom: 12,
           }}
         >
-          Research &amp; Procurement FAQ
+          Research FAQ
         </h2>
         <p
           style={{
@@ -84,15 +50,15 @@ export function FAQSection() {
             marginBottom: 48,
           }}
         >
-          Answers to common institutional procurement questions.
+          Answers to common questions about catalog access, COAs, and research-use handling.
         </p>
 
         {/* Accordion */}
-        {FAQ_ITEMS.map((item, index) => {
+        {FAQ_ITEMS.slice(0, 8).map((item, index) => {
           const isOpen = openItems.has(index);
           return (
             <div
-              key={index}
+              key={item.id}
               style={{
                 border: "1px solid var(--border)",
                 borderRadius: 12,
@@ -124,7 +90,7 @@ export function FAQSection() {
                     marginRight: 16,
                   }}
                 >
-                  {item.q}
+                  {item.question}
                 </span>
                 <svg
                   width="14"
@@ -150,7 +116,7 @@ export function FAQSection() {
                     lineHeight: 1.7,
                   }}
                 >
-                  {item.a}
+                  {item.answer}
                 </div>
               )}
             </div>

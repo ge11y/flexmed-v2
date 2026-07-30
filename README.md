@@ -1,4 +1,34 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+This is a [Next.js](https://nextjs.org) storefront for FlexMed.
+
+## Manual order sheet integration
+
+The current manual-order workflow can forward submitted orders to a shared Google Sheet through a webhook.
+
+- Environment variable: `MANUAL_ORDER_WEBHOOK_URL`
+- Setup guide: [/Users/goobbotv3/flexmed-v2/docs/google-sheets-manual-orders.md](/Users/goobbotv3/flexmed-v2/docs/google-sheets-manual-orders.md)
+
+## Catalog dashboard sync
+
+The admin inventory dashboard can also sync the product list to a shared Google Sheet.
+
+- Environment variable: `CATALOG_SYNC_WEBHOOK_URL`
+- Environment variable: `CATALOG_SOURCE_URL`
+- Setup guide: [/Users/goobbotv3/flexmed-v2/docs/google-sheets-catalog-sync.md](/Users/goobbotv3/flexmed-v2/docs/google-sheets-catalog-sync.md)
+
+## Supabase admin architecture
+
+The intended long-term admin system is Supabase-backed so founder and employees can manage:
+
+- catalog prices
+- inventory and low-stock status
+- promos
+- manual orders
+- payment proof review
+
+Docs:
+
+- Architecture: [/Users/goobbotv3/flexmed-v2/docs/supabase-admin-architecture.md](/Users/goobbotv3/flexmed-v2/docs/supabase-admin-architecture.md)
+- Starter schema: [/Users/goobbotv3/flexmed-v2/docs/supabase-schema.sql](/Users/goobbotv3/flexmed-v2/docs/supabase-schema.sql)
 
 ## Getting Started
 

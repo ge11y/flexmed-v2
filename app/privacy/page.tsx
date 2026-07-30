@@ -3,7 +3,7 @@ import { LEGAL_PAGES } from '@/lib/data-legal'
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
-  description: 'Privacy policy for FlexMed — how institutional data is collected and used.',
+  description: 'Privacy policy for FlexMed — how catalog contact and account data is collected and used.',
 }
 
 export default function PrivacyPage() {

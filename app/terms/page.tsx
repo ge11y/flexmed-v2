@@ -3,7 +3,7 @@ import { LEGAL_PAGES } from '@/lib/data-legal'
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
-  description: 'Terms of service for FlexMed — institutional buyers only.',
+  description: 'Terms of service for FlexMed research catalog access and ordering.',
 }
 
 export default function TermsPage() {

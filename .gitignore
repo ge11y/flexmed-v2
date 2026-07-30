@@ -39,3 +39,28 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local working-tree snapshots (84 MB of tarballs — never in a public repo)
+/backups/
+
+# dev scratch / one-off inspection helpers
+/measure.mjs
+/measure2.mjs
+/inspect2.mjs
+/inspect-vials.mjs
+/check_bounds.py
+/check-product.mjs
+/proxy.ts
+
+# audit/inspect scripts that embed the admin password in plaintext.
+# Excluded from the public repo until the credential is parameterized out.
+/scripts/audit-affiliates-http.mjs
+/scripts/audit-assets-http.mjs
+/scripts/audit-clients-http.mjs
+/scripts/audit-multistrength-data-http.mjs
+/scripts/audit-multistrength-storefront.mjs
+/scripts/audit-order-inventory-links-http.mjs
+/scripts/audit-order-inventory-links.mjs
+/scripts/audit-supply-flow-http.mjs
+/scripts/fetch-debug-product-http.mjs
+/scripts/inspect-catalog-family-http.mjs

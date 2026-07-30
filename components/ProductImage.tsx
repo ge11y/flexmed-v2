@@ -1,32 +1,32 @@
 'use client'
 
+import Image from 'next/image'
 import { useState, useRef } from 'react'
 
-interface ProductImageProps {
+interface Props {
   slug: string
   displayName: string
   accentColorHex: string
   image: string
   hoverSpinFrames: string[]
   height?: number
+  className?: string
 }
 
 export function ProductImage({
-  slug,
   displayName,
   accentColorHex,
   image,
   hoverSpinFrames,
-  height = 140,
-}: ProductImageProps) {
+  height = 90,
+  className,
+}: Props) {
   const [frameIndex, setFrameIndex] = useState(0)
-  const [isHovering, setIsHovering] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const hasSpin = hoverSpinFrames.length > 1
 
   const handleMouseEnter = () => {
     if (!hasSpin) return
-    setIsHovering(true)
     let i = 0
     intervalRef.current = setInterval(() => {
       i = (i + 1) % hoverSpinFrames.length
@@ -36,7 +36,6 @@ export function ProductImage({
 
   const handleMouseLeave = () => {
     if (!hasSpin) return
-    setIsHovering(false)
     if (intervalRef.current) clearInterval(intervalRef.current)
     setFrameIndex(0)
   }
@@ -47,33 +46,44 @@ export function ProductImage({
 
   return (
     <div
+      className={className}
       style={{
+        position: 'relative',
         height: `${height}px`,
-        background: 'var(--bg-elevated)',
-        borderRadius: 'var(--radius-md)',
+        width: '100%',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        border: '1px solid var(--border)',
         overflow: 'hidden',
-        position: 'relative',
       }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
+      {/* Glow behind vial */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: `radial-gradient(ellipse at center, ${accentColorHex}14 0%, transparent 70%)`,
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      />
+
       {src ? (
-        <img
-          src={src}
-          alt={displayName}
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'contain',
-            padding: '12px',
-            transition: hasSpin ? 'none' : 'transform 0.3s ease',
-            transform: hasSpin ? 'none' : isHovering ? 'scale(1.03)' : 'scale(1)',
-          }}
-        />
+        <div style={{ position: 'relative', width: '100%', height: '100%', zIndex: 1 }}>
+          <Image
+            src={src}
+            alt={displayName}
+            fill
+            sizes="(max-width: 768px) 50vw, 25vw"
+            quality={72}
+            style={{
+              objectFit: 'contain',
+              objectPosition: 'center center',
+            }}
+          />
+        </div>
       ) : (
         <div
           style={{
@@ -82,7 +92,6 @@ export function ProductImage({
             color: 'var(--text-muted)',
             letterSpacing: '0.08em',
             textAlign: 'center',
-            padding: '12px',
           }}
         >
           <div style={{ marginBottom: '4px', color: accentColorHex, fontSize: '13px' }}>
@@ -92,15 +101,15 @@ export function ProductImage({
         </div>
       )}
 
-      {/* Hover-spin indicator dot */}
       {hasSpin && (
         <div
           style={{
             position: 'absolute',
-            bottom: '6px',
+            bottom: '4px',
             right: '8px',
             display: 'flex',
             gap: '3px',
+            zIndex: 2,
           }}
         >
           {hoverSpinFrames.map((_, i) => (
@@ -111,7 +120,6 @@ export function ProductImage({
                 height: '3px',
                 borderRadius: '50%',
                 background: i === frameIndex ? accentColorHex : 'var(--border)',
-                transition: 'background 0.1s',
               }}
             />
           ))}
