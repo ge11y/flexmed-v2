@@ -115,7 +115,10 @@ export function NavBar() {
     if (!query) return;
     setSearchOpen(false);
     setMenuOpen(false);
-    router.push(`/products?group=peptides&q=${encodeURIComponent(query)}`);
+    // Search must span the whole catalog. Scoping it to the peptides group made
+    // blends, sprays, topicals and water return "No catalog listings found"
+    // unless the shopper had already guessed the right category tab.
+    router.push(`/products?q=${encodeURIComponent(query)}`);
   }
 
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
@@ -211,7 +214,7 @@ export function NavBar() {
 
         <div className="site-nav-actions" style={{ display: "flex", alignItems: "center", gap: "14px" }}>
           <Link
-            href="/products?group=peptides"
+            href="/products"
             className="site-nav-shop-cta"
             style={{
               minHeight: "38px",

@@ -164,7 +164,7 @@ export default function CartPage() {
               Browse the catalog, add products, and return here to review your order before checkout.
             </p>
             <div>
-              <Link href="/products?group=peptides" className="fm-btn-primary">
+              <Link href="/products" className="fm-btn-primary">
                 Browse catalog
               </Link>
             </div>

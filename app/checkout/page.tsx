@@ -714,7 +714,7 @@ export default function CheckoutPage() {
             Add products to the cart first, then return here to enter customer details and review the order.
           </p>
           <div>
-            <Link href="/products?group=peptides" className="fm-btn-primary">
+            <Link href="/products" className="fm-btn-primary">
               Browse catalog
             </Link>
           </div>

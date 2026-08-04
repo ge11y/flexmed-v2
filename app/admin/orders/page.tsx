@@ -367,7 +367,7 @@ export default function AdminOrdersPage() {
     dispatchAdminOrdersUpdated(next)
 
     try {
-      await fetch('/api/admin/orders', {
+      const response = await fetch('/api/admin/orders', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -378,8 +378,20 @@ export default function AdminOrdersPage() {
           },
         }),
       })
+
+      if (!response.ok) {
+        // Local state is kept so the session stays usable, but the operator has to
+        // know it diverged — silently swallowing this is how orders reached
+        // customers with tracking shown on screen and NULL in the database.
+        setEmailMessage(`Could not save changes for ${orderId}. This screen may be showing values that were never saved.`)
+        return false
+      }
+
+      return true
     } catch {
       // Keep the local state so the current session is still usable.
+      setEmailMessage(`Could not reach the server to save changes for ${orderId}. This screen may be showing values that were never saved.`)
+      return false
     }
   }
 

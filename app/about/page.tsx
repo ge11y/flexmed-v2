@@ -64,7 +64,7 @@ export default async function AboutPage() {
               FlexMed is built as a research-use storefront. The public site is designed to keep product families, strengths, availability, and CoA status easy to review while keeping the language centered on laboratory research.
             </p>
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '24px' }}>
-              <Link className="fm-btn-primary" href="/products?group=peptides">Browse catalog</Link>
+              <Link className="fm-btn-primary" href="/products">Browse catalog</Link>
               <Link className="fm-btn-outline" href="/coa">View CoA library</Link>
             </div>
           </div>

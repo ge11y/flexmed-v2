@@ -347,7 +347,7 @@ export default function PaymentInstructionsPage() {
             <Link href="/checkout" className="fm-btn-primary">
               Return to checkout
             </Link>
-            <Link href="/products?group=peptides" className="fm-btn-outline">
+            <Link href="/products" className="fm-btn-outline">
               Browse catalog
             </Link>
           </div>

@@ -128,7 +128,7 @@ export function FeaturedCompounds({ featuredProducts, compact = false, embedded 
               <span className="featured-section-label">Founder Selected</span>
               <h2>Featured products</h2>
             </div>
-            <Link href="/products?group=peptides" className="fm-btn-outline" style={{ padding: "9px 16px", fontSize: 12 }}>
+            <Link href="/products" className="fm-btn-outline" style={{ padding: "9px 16px", fontSize: 12 }}>
               Browse all
             </Link>
           </div>
@@ -180,7 +180,7 @@ export function FeaturedCompounds({ featuredProducts, compact = false, embedded 
             A rotating window into selected catalog products, current availability, and research-use listings.
           </p>
           <div className="featured-orbit-actions">
-            <Link href="/products?group=peptides" className="fm-btn-primary">
+            <Link href="/products" className="fm-btn-primary">
               Browse full catalog <ArrowRight size={16} aria-hidden="true" />
             </Link>
             <span>{featured.length} selected</span>

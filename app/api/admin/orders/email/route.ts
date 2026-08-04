@@ -34,11 +34,29 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: 'Order not found for email send.' }, { status: 404 })
   }
 
+  const order = deserializeManualOrder(data)
+
+  // The shipment email renders carrier/tracking from the persisted row, not from
+  // the admin screen's local state. Those two can diverge — the admin UI keeps
+  // optimistic state in localStorage even when a save never reached the database
+  // — so without this guard a customer can receive "your order has shipped" with
+  // "Not provided" on every tracking line while the admin still shows a number.
+  if (payload.type === 'order_shipped' && !order.trackingNumber?.trim()) {
+    return NextResponse.json(
+      {
+        ok: false,
+        code: 'missing_tracking',
+        error: 'No tracking number is saved for this order. Add tracking, confirm it saved, then send the shipment email.',
+      },
+      { status: 409 },
+    )
+  }
+
   if (!canSendTransactionalEmail()) {
     return NextResponse.json({ ok: false, code: 'missing_email_config', error: 'Email delivery is not configured yet.' }, { status: 503 })
   }
 
-  const result = await sendTransactionalEmail(deserializeManualOrder(data), payload.type)
+  const result = await sendTransactionalEmail(order, payload.type)
   if (!result.ok) {
     return NextResponse.json({ ok: false, code: result.code, detail: 'detail' in result ? result.detail : undefined }, { status: 502 })
   }
