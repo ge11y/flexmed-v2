@@ -42,11 +42,19 @@ export function ProductCatalog({ products, variant = "dark" }: Props) {
     [products]
   );
 
+  const normalizedQuery = deferredQuery.trim().toLowerCase();
+  // A search has to find a product no matter which group tab happens to be
+  // open. Shoppers search by name, not by our taxonomy -- searching "KLOW"
+  // from the Peptides tab returned nothing because it is catalogued as a
+  // blend. The tab still governs plain browsing when the search box is empty.
+  const searchSpansAllGroups = group !== "all" && Boolean(normalizedQuery);
+
   const filteredProducts = useMemo(() => {
     const normalized = deferredQuery.trim().toLowerCase();
+    const restrictToGroup = group !== "all" && !normalized;
 
     return products.filter((product) => {
-      if (group !== "all" && getCatalogGroup(product) !== group) return false;
+      if (restrictToGroup && getCatalogGroup(product) !== group) return false;
       if (category !== "All" && normalizeCategoryFilter(product.category) !== category) return false;
       if (!matchesPriceFilter(product, priceFilter)) return false;
       if (!normalized) return true;
@@ -217,6 +225,7 @@ export function ProductCatalog({ products, variant = "dark" }: Props) {
           }}
         >
           {filteredProducts.length} result{filteredProducts.length !== 1 ? "s" : ""}
+          {searchSpansAllGroups ? " · all categories" : ""}
         </span>
       </div>
 
