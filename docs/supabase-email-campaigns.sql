@@ -7,7 +7,7 @@ create table if not exists public.marketing_subscribers (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id) on delete set null,
   email text not null unique,
-  is_subscribed boolean not null default false,
+  is_subscribed boolean not null default true,
   source text not null default 'account',
   unsubscribe_token text not null unique default encode(gen_random_bytes(24), 'hex'),
   subscribed_at timestamptz,
@@ -18,6 +18,13 @@ create table if not exists public.marketing_subscribers (
 
 create index if not exists marketing_subscribers_active_idx
   on public.marketing_subscribers (is_subscribed, updated_at desc);
+
+-- Opt-out model: customers are subscribed when they create an account or place
+-- an order, and unsubscribe from the link in any campaign email. Existing
+-- installs need this default flipped; rows already marked unsubscribed keep
+-- their choice and are never resubscribed by the application.
+alter table if exists public.marketing_subscribers
+  alter column is_subscribed set default true;
 
 create table if not exists public.email_campaigns (
   id uuid primary key default gen_random_uuid(),

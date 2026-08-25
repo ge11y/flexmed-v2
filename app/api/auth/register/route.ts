@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
-import { saveMarketingSubscription } from '@/lib/email-campaigns'
+import { ensureMarketingSubscription, isTolerableMarketingError } from '@/lib/email-campaigns'
 
 type RegisterPayload = {
   email: string
@@ -63,7 +63,8 @@ export async function POST(request: Request) {
       lastName,
       phone,
       source: 'checkout',
-      marketingOptIn: payload.marketingOptIn === true,
+      // Opt-out model: new accounts are subscribed unless the client says otherwise.
+      marketingOptIn: payload.marketingOptIn !== false,
     },
   })
 
@@ -80,13 +81,14 @@ export async function POST(request: Request) {
     )
   }
 
-  const marketingResult = await saveMarketingSubscription({
+  // ensure (not upsert) so an address that previously unsubscribed is not
+  // silently resubscribed by signing up again.
+  const marketingResult = await ensureMarketingSubscription({
     email,
     userId: data.user.id,
-    subscribed: payload.marketingOptIn === true,
     source: 'account_creation',
   })
-  if (!marketingResult.ok && !/not configured|relation .*does not exist|schema cache/i.test(marketingResult.error)) {
+  if (!marketingResult.ok && !isTolerableMarketingError(marketingResult.error)) {
     return NextResponse.json({ ok: false, error: 'Account created, but email preferences could not be saved.' }, { status: 502 })
   }
 

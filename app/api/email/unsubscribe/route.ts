@@ -11,14 +11,25 @@ export async function GET(request: Request) {
     })
   }
 
-  const { error } = await supabase
+  const now = new Date().toISOString()
+  const { data, error } = await supabase
     .from('marketing_subscribers')
-    .update({ is_subscribed: false, unsubscribed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .update({ is_subscribed: false, unsubscribed_at: now, updated_at: now })
     .eq('unsubscribe_token', token)
+    .select('email')
 
   if (error) {
     return new NextResponse('<h1>Unsubscribe unavailable</h1><p>Please try again later.</p>', {
       status: 502,
+      headers: { 'Content-Type': 'text/html; charset=utf-8' },
+    })
+  }
+
+  // An update that matches nothing is not an error in PostgREST, so confirm a
+  // row actually changed rather than reporting a success that never happened.
+  if (!data || data.length === 0) {
+    return new NextResponse('<h1>Unsubscribe link not recognized</h1><p>This link may have already been used or has expired. Please contact the site owner for help.</p>', {
+      status: 404,
       headers: { 'Content-Type': 'text/html; charset=utf-8' },
     })
   }

@@ -18,6 +18,7 @@ type AccountProfile = {
 }
 
 type AccountForm = {
+  email: string
   firstName: string
   lastName: string
   phone: string
@@ -47,12 +48,13 @@ const blankAddress: ManualOrderAddress = {
 }
 
 const blankForm: AccountForm = {
+  email: '',
   firstName: '',
   lastName: '',
   phone: '',
   shippingAddress: blankAddress,
   billingAddress: blankAddress,
-  marketingOptIn: false,
+  marketingOptIn: true,
 }
 
 const blankAuthForm: AuthForm = {
@@ -61,7 +63,7 @@ const blankAuthForm: AuthForm = {
   firstName: '',
   lastName: '',
   phone: '',
-  marketingOptIn: false,
+  marketingOptIn: true,
 }
 
 function inputStyle(): React.CSSProperties {
@@ -175,6 +177,7 @@ export default function AccountPage() {
 
     setEmail(result.profile.email)
     setForm({
+      email: result.profile.email,
       firstName: result.profile.firstName,
       lastName: result.profile.lastName,
       phone: result.profile.phone,
@@ -292,7 +295,17 @@ export default function AccountPage() {
         throw new Error(result.error || 'Account details could not be saved.')
       }
 
-      setMessage('Account details saved.')
+      const emailChanged = result.profile.email.toLowerCase() !== (email || user?.email || '').toLowerCase()
+      if (emailChanged) {
+        // The signed-in session still carries the old address until it is refreshed.
+        await supabase.auth.refreshSession()
+        const { data: refreshed } = await supabase.auth.getUser()
+        if (refreshed.user) setUser(refreshed.user)
+      }
+
+      setEmail(result.profile.email)
+      setForm((current) => ({ ...current, email: result.profile?.email ?? current.email }))
+      setMessage(emailChanged ? 'Account details saved. Use your new email address to sign in from now on.' : 'Account details saved.')
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : 'Account details could not be saved.')
     } finally {
@@ -445,15 +458,9 @@ export default function AccountPage() {
             </div>
 
             {authMode === 'create' ? (
-              <label style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                <input
-                  type="checkbox"
-                  checked={authForm.marketingOptIn}
-                  onChange={(event) => updateAuth('marketingOptIn', event.target.checked)}
-                  style={{ marginTop: '4px' }}
-                />
-                <span>Send me occasional product and promotion updates by email. I can unsubscribe at any time.</span>
-              </label>
+              <div style={{ color: 'var(--text-secondary)', lineHeight: 1.6, fontSize: '13px' }}>
+                New accounts receive occasional product and promotion updates by email. You can unsubscribe at any time from your account page or from any email we send.
+              </div>
             ) : null}
 
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: '14px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -505,8 +512,12 @@ export default function AccountPage() {
               </label>
               <label style={labelStyle()}>
                 {fieldLabel('Email')}
-                <input value={email || user.email || ''} readOnly style={{ ...inputStyle(), opacity: 0.75 }} />
+                <input value={form.email} onChange={(event) => update('email', event.target.value)} style={inputStyle()} type="email" />
               </label>
+            </div>
+
+            <div style={{ color: 'var(--text-muted)', fontSize: '13px', lineHeight: 1.6, marginTop: '-8px' }}>
+              Your email is also your sign-in address. Changing it moves your order history to the new address and you will sign in with it from then on.
             </div>
 
             <AddressFields title="Shipping Address" address={form.shippingAddress} onChange={(key, value) => updateAddress('shippingAddress', key, value)} />
@@ -546,7 +557,7 @@ export default function AccountPage() {
                 onChange={(event) => update('marketingOptIn', event.target.checked)}
                 style={{ marginTop: '4px' }}
               />
-              <span>Send me occasional product and promotion updates by email. I can unsubscribe at any time.</span>
+              <span>Receive occasional product and promotion updates by email. Uncheck this and save to unsubscribe.</span>
             </label>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>

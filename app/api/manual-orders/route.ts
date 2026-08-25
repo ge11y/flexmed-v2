@@ -5,6 +5,7 @@ import type { ManualOrderSubmission } from '@/lib/manual-orders'
 import { serializeManualOrder } from '@/lib/manual-orders-db'
 import { normalizeAffiliateCode } from '@/lib/affiliates'
 import { buildOrderDayPrefix } from '@/lib/order-ids'
+import { ensureMarketingSubscription } from '@/lib/email-campaigns'
 import { buildCheckoutQuote } from '@/lib/promo-pricing'
 import { getActiveSitePromos } from '@/lib/site-promos'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
@@ -203,6 +204,17 @@ export async function POST(request: Request) {
             },
             { status: 502 },
           )
+        }
+
+        // Opt-out model: placing an order adds the customer to marketing.
+        // Never fail the order over this, and never override a past unsubscribe.
+        try {
+          await ensureMarketingSubscription({
+            email: normalizedOrder.customer.email,
+            source: 'order',
+          })
+        } catch (subscriptionError) {
+          console.error('marketing subscription on order failed', subscriptionError)
         }
 
         let emailStatus: { sent: boolean; code?: string } = { sent: false, code: 'missing_email_config' }

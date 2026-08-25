@@ -78,7 +78,7 @@ const initialAccountForm: AccountForm = {
   email: '',
   phone: '',
   password: '',
-  marketingOptIn: false,
+  marketingOptIn: true,
 }
 
 function Field({
@@ -818,15 +818,9 @@ export default function CheckoutPage() {
               ) : null}
 
               {authMode === 'create' ? (
-                <label style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                  <input
-                    type="checkbox"
-                    checked={accountForm.marketingOptIn}
-                    onChange={(event) => updateAccount('marketingOptIn', event.target.checked)}
-                    style={{ marginTop: '4px' }}
-                  />
-                  <span>Send me occasional product and promotion updates by email. I can unsubscribe at any time.</span>
-                </label>
+                <div style={{ color: 'var(--text-secondary)', lineHeight: 1.6, fontSize: '13px' }}>
+                  New accounts receive occasional product and promotion updates by email. You can unsubscribe at any time from your account page or from any email we send.
+                </div>
               ) : null}
 
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: '14px', alignItems: 'center', flexWrap: 'wrap' }}>

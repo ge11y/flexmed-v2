@@ -69,6 +69,91 @@ export async function saveMarketingSubscription(args: {
   return { ok: true as const }
 }
 
+// Opt-out model: customers are added when they create an account or place an
+// order. This never overwrites an existing row, so a past unsubscribe is not
+// resurrected by the next order.
+export async function ensureMarketingSubscription(args: {
+  email: string
+  userId?: string | null
+  source?: string
+}) {
+  const supabase = getSupabaseAdmin()
+  const email = normalizeEmail(args.email)
+  if (!supabase || !email) return { ok: false as const, error: 'Marketing subscription is not configured.' }
+
+  const now = new Date().toISOString()
+  const { error } = await supabase.from('marketing_subscribers').upsert(
+    {
+      email,
+      user_id: args.userId || null,
+      is_subscribed: true,
+      source: args.source || 'account',
+      subscribed_at: now,
+      unsubscribed_at: null,
+      updated_at: now,
+    },
+    { onConflict: 'email', ignoreDuplicates: true },
+  )
+
+  if (error) return { ok: false as const, error: error.message }
+  return { ok: true as const }
+}
+
+// Used when a customer edits their email so their subscription record follows
+// the new address instead of being stranded on the old one.
+export async function moveMarketingSubscription(args: {
+  fromEmail: string
+  toEmail: string
+  userId?: string | null
+}) {
+  const supabase = getSupabaseAdmin()
+  const fromEmail = normalizeEmail(args.fromEmail)
+  const toEmail = normalizeEmail(args.toEmail)
+  if (!supabase) return { ok: false as const, error: 'Marketing subscription is not configured.' }
+  if (!fromEmail || !toEmail || fromEmail === toEmail) return { ok: true as const }
+
+  const existing = await supabase.from('marketing_subscribers').select('id').eq('email', toEmail).maybeSingle()
+  if (existing.error) return { ok: false as const, error: existing.error.message }
+
+  // A row already sits on the new address. Keep its preference — it may be an
+  // unsubscribe we have to honour — and retire the old row.
+  if (existing.data) {
+    const { error } = await supabase.from('marketing_subscribers').delete().eq('email', fromEmail)
+    if (error) return { ok: false as const, error: error.message }
+    return { ok: true as const }
+  }
+
+  const { error } = await supabase
+    .from('marketing_subscribers')
+    .update({ email: toEmail, user_id: args.userId || null, updated_at: new Date().toISOString() })
+    .eq('email', fromEmail)
+
+  if (error) return { ok: false as const, error: error.message }
+  return { ok: true as const }
+}
+
+// marketing_subscribers is what the campaign sender reads, so it — not the auth
+// user metadata — is the source of truth for whether someone is subscribed.
+// Returns isSubscribed: null when there is no row for the address yet.
+export async function getMarketingSubscription(email: string) {
+  const supabase = getSupabaseAdmin()
+  const normalized = normalizeEmail(email)
+  if (!supabase || !normalized) return { ok: false as const, error: 'Marketing subscription is not configured.' }
+
+  const { data, error } = await supabase
+    .from('marketing_subscribers')
+    .select('is_subscribed')
+    .eq('email', normalized)
+    .maybeSingle()
+
+  if (error) return { ok: false as const, error: error.message }
+  return { ok: true as const, isSubscribed: data ? Boolean(data.is_subscribed) : null }
+}
+
+export function isTolerableMarketingError(message: string) {
+  return /not configured|relation .*does not exist|schema cache/i.test(message)
+}
+
 export async function getCampaignDashboard() {
   const supabase = getSupabaseAdmin()
   if (!supabase) return { ok: false as const, error: 'Supabase is not configured.' }
@@ -110,7 +195,7 @@ function campaignHtml(bodyText: string, unsubscribeToken: string) {
     .map((line) => (line.trim() ? `<p style="margin:0 0 14px">${line.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')}</p>` : '<div style="height:6px"></div>'))
     .join('')
   const unsubscribeUrl = `${getSiteUrl()}/api/email/unsubscribe?token=${encodeURIComponent(unsubscribeToken)}`
-  return `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#17233f;max-width:640px;margin:auto"><div>${body}</div><hr style="border:0;border-top:1px solid #d9e1ef;margin:28px 0 16px"><p style="font-size:12px;color:#667085">You are receiving this because you opted in to FlexMed email updates. <a href="${unsubscribeUrl}">Unsubscribe</a></p></div>`
+  return `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#17233f;max-width:640px;margin:auto"><div>${body}</div><hr style="border:0;border-top:1px solid #d9e1ef;margin:28px 0 16px"><p style="font-size:12px;color:#667085">You are receiving this because you have a FlexMed customer account or placed an order. <a href="${unsubscribeUrl}">Unsubscribe</a></p></div>`
 }
 
 export async function sendEmailCampaign(args: { title: string; subject: string; bodyText: string; testRecipient?: string }) {
@@ -153,7 +238,7 @@ export async function sendEmailCampaign(args: { title: string; subject: string; 
         from: config.from,
         to: [email],
         subject: args.subject.trim(),
-        text: `${args.bodyText.trim()}\n\nUnsubscribe: ${getSiteUrl()}/api/email/unsubscribe?token=${recipient.unsubscribe_token}`,
+        text: `${args.bodyText.trim()}\n\nYou are receiving this because you have a FlexMed customer account or placed an order.\nUnsubscribe: ${getSiteUrl()}/api/email/unsubscribe?token=${recipient.unsubscribe_token}`,
         html: campaignHtml(args.bodyText.trim(), String(recipient.unsubscribe_token)),
       }),
     })
