@@ -5,7 +5,7 @@ const STRAIGHT_ANSWERS = [
   {
     question: 'Are these products for human use?',
     answer:
-      'No. Everything on FlexMed is sold for laboratory and research use only, not for human consumption. Customers must be 18 or older to purchase.',
+      'No. Everything on FlexMed is sold for laboratory and research use only, not for human consumption. Customers must be 21 or older to purchase.',
   },
   {
     question: 'What is a CoA, and where do I find it?',
