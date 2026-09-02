@@ -13,7 +13,6 @@ import {
   Layers3,
   ShieldCheck,
   Sparkles,
-  SprayCan,
 } from "lucide-react";
 import { getProductImageSrc } from "@/lib/data-products";
 import { isLowStock } from "@/lib/inventory-state";
@@ -37,13 +36,6 @@ const CATEGORY_LINKS = [
     detail: "Combination listings",
     icon: Layers3,
     image: "/claude-storefront/banners/blends.png",
-  },
-  {
-    label: "Sprays",
-    href: "/products?group=sprays",
-    detail: "Nasal spray format",
-    icon: SprayCan,
-    image: "/claude-storefront/banners/sprays.png",
   },
   {
     label: "Topicals",
@@ -278,7 +270,7 @@ export function VideoHero({ featuredProducts = [] }: VideoHeroProps) {
         }
         .hero-categories {
           display: grid;
-          grid-template-columns: repeat(4, minmax(0, 1fr));
+          grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 16px;
         }
         .hero-category-tile {
@@ -444,11 +436,6 @@ export function VideoHero({ featuredProducts = [] }: VideoHeroProps) {
           .hero-categories {
             grid-template-columns: repeat(2, minmax(0, 1fr));
           }
-          .hero-category-tile:last-child {
-            grid-column: 1 / -1;
-            width: min(50%, 100%);
-            justify-self: center;
-          }
         }
         @media (max-width: 560px) {
           .hero-showcase-shell {
@@ -480,11 +467,6 @@ export function VideoHero({ featuredProducts = [] }: VideoHeroProps) {
           }
           .hero-categories {
             grid-template-columns: 1fr;
-          }
-          .hero-category-tile:last-child {
-            grid-column: auto;
-            width: 100%;
-            justify-self: stretch;
           }
           .hero-category-tile {
             min-height: 212px;

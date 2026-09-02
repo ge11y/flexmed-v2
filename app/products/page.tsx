@@ -1,14 +1,16 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
+import { permanentRedirect } from 'next/navigation'
 import { Suspense } from 'react'
 import { getLiveCatalogDisplayProducts, getLiveCatalogProducts, getLiveFeaturedProducts } from '@/lib/catalog-live'
+import { DELISTED_COLLECTIONS } from '@/lib/catalog-delist'
 import { buildPromoDisplayCopy } from '@/lib/promo-display'
 import { getActiveSitePromos, type SitePromoRecord } from '@/lib/site-promos'
 import { getPublicVialCases } from '@/lib/vial-cases'
 import { ProductCatalog } from '@/components/ProductCatalog'
 import { FeaturedCompounds } from '@/components/FeaturedCompounds'
 
-const VISUAL_SHOP_GROUPS = new Set(['all', 'peptides', 'blends', 'sprays', 'topicals', 'bio_regulators', 'water'])
+const VISUAL_SHOP_GROUPS = new Set(['all', 'peptides', 'blends', 'topicals', 'bio_regulators', 'water'])
 
 const SHOP_GROUP_LABELS: Record<string, { eyebrow: string; title: string; description: string }> = {
   all: {
@@ -25,11 +27,6 @@ const SHOP_GROUP_LABELS: Record<string, { eyebrow: string; title: string; descri
     eyebrow: 'Shop Blends',
     title: 'Shop peptide blend catalog',
     description: 'Browse combination listings, available strengths, stock status, and published documentation.',
-  },
-  sprays: {
-    eyebrow: 'Shop Sprays',
-    title: 'Shop nasal spray catalog',
-    description: 'Browse spray-format research listings with live availability and documentation status.',
   },
   topicals: {
     eyebrow: 'Shop Topicals',
@@ -52,7 +49,6 @@ const SHOP_GROUP_IMAGES: Record<string, string> = {
   all: '/claude-storefront/banners/peptides.png',
   peptides: '/claude-storefront/banners/peptides.png',
   blends: '/claude-storefront/banners/blends.png',
-  sprays: '/claude-storefront/banners/sprays.png',
   topicals: '/claude-storefront/banners/topicals-serum.png',
   bio_regulators: '/claude-storefront/banners/bioregulators.png',
   water: '/claude-storefront/banners/water.png',
@@ -92,6 +88,8 @@ export default async function ProductsPage({
   const rawGroup = Array.isArray(params.group) ? params.group[0] : params.group
   const rawCollection = Array.isArray(params.collection) ? params.collection[0] : params.collection
   const activeGroup = rawGroup ?? rawCollection ?? 'all'
+  // Withdrawn collections keep no landing page: old links go to the full catalog.
+  if (DELISTED_COLLECTIONS.has(activeGroup)) permanentRedirect('/products')
   const hasVisualShopFrame = VISUAL_SHOP_GROUPS.has(activeGroup)
   const shopCopy = SHOP_GROUP_LABELS[activeGroup] ?? SHOP_GROUP_LABELS.peptides
   const shopImage = SHOP_GROUP_IMAGES[activeGroup] ?? SHOP_GROUP_IMAGES.peptides

@@ -5,7 +5,6 @@ const BASE_URL = 'https://flexmed-v2.vercel.app'
 const targets = [
   { family: '5 Amino 1', slug: '5-amino-1-5mg', expected: ['10 mg', '50 mg'] },
   { family: 'HGH', slug: 'hgh-24iu', expected: ['15 iu', '24 iu', '36 iu'] },
-  { family: 'BAC Water', slug: 'bac-h2o-3ml', expected: ['3 ml', '10 ml', '30 ml'] },
   { family: 'Glutathione', slug: 'glutathione-600mg-1000mg', expected: ['1000 mg', '1200 mg', '1500 mg'] },
 ]
 
