@@ -104,8 +104,9 @@ export function VideoHero({ featuredProducts = [] }: VideoHeroProps) {
     const video = videoRef.current;
     if (!video) return;
 
-    video.playbackRate = 0.55;
-
+    // The slow tempo is baked into /public/hero-video.mp4 itself. Slowing the
+    // 24fps source with playbackRate made the browser hold each frame for an
+    // uneven number of refreshes, which read as a stutter.
     const playVideo = async () => {
       try {
         await video.play();
@@ -155,7 +156,6 @@ export function VideoHero({ featuredProducts = [] }: VideoHeroProps) {
           object-fit: cover;
           z-index: -1;
           transform: scale(1.02);
-          filter: saturate(1.12) contrast(1.02);
         }
         .hero-showcase-shell {
           position: relative;
@@ -285,7 +285,6 @@ export function VideoHero({ featuredProducts = [] }: VideoHeroProps) {
           background: linear-gradient(165deg,#265291,#1A3E74);
           color: #f5fbff;
           text-decoration: none;
-          backdrop-filter: blur(16px);
           box-shadow: 0 20px 50px rgba(0,0,0,.26);
           overflow: hidden;
           transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
@@ -346,7 +345,6 @@ export function VideoHero({ featuredProducts = [] }: VideoHeroProps) {
           color: #f6fbff;
           text-decoration: none;
           box-shadow: 0 20px 48px rgba(0,0,0,0.26);
-          backdrop-filter: blur(18px);
           display: grid;
           grid-template-columns: minmax(0, 1fr) 170px;
           gap: 12px;
@@ -500,10 +498,18 @@ export function VideoHero({ featuredProducts = [] }: VideoHeroProps) {
         }
       `}</style>
 
-      <video ref={videoRef} className="hero-showcase-video" autoPlay muted loop playsInline preload="auto" poster="/hero-video-poster.png">
+      <video
+        ref={videoRef}
+        className="hero-showcase-video"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        poster="/hero-video-poster.jpg"
+        aria-hidden="true"
+      >
         <source src="/hero-video.mp4" type="video/mp4" />
-        <source src="/videos/header-banner.mp4" type="video/mp4" />
-        <source src="/videos/header-banner.mov" type="video/quicktime" />
       </video>
 
       <div className="hero-showcase-shell">
