@@ -10,7 +10,7 @@ import { getPublicVialCases } from '@/lib/vial-cases'
 import { ProductCatalog } from '@/components/ProductCatalog'
 import { FeaturedCompounds } from '@/components/FeaturedCompounds'
 
-const VISUAL_SHOP_GROUPS = new Set(['all', 'peptides', 'blends', 'topicals', 'bio_regulators', 'water'])
+const VISUAL_SHOP_GROUPS = new Set(['all', 'peptides', 'blends', 'topicals', 'bio_regulators'])
 
 const SHOP_GROUP_LABELS: Record<string, { eyebrow: string; title: string; description: string }> = {
   all: {
@@ -38,11 +38,6 @@ const SHOP_GROUP_LABELS: Record<string, { eyebrow: string; title: string; descri
     title: 'Shop bio regulator catalog',
     description: 'Browse bio regulator listings with live stock status and available documentation.',
   },
-  water: {
-    eyebrow: 'Shop Water',
-    title: 'Shop water catalog',
-    description: 'Browse water listings, stock status, and fulfillment-ready product details.',
-  },
 }
 
 const SHOP_GROUP_IMAGES: Record<string, string> = {
@@ -51,7 +46,6 @@ const SHOP_GROUP_IMAGES: Record<string, string> = {
   blends: '/claude-storefront/banners/blends.png',
   topicals: '/claude-storefront/banners/topicals-serum.png',
   bio_regulators: '/claude-storefront/banners/bioregulators.png',
-  water: '/claude-storefront/banners/water.png',
 }
 
 const SHOP_GROUP_IMAGE_POSITIONS: Record<string, string> = {

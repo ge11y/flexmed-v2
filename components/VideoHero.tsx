@@ -8,7 +8,6 @@ import {
   BadgeCheck,
   Beaker,
   Dna,
-  Droplets,
   FlaskConical,
   Layers3,
   ShieldCheck,
@@ -51,13 +50,6 @@ const CATEGORY_LINKS = [
     detail: "Regulator catalog",
     icon: Dna,
     image: "/claude-storefront/banners/bioregulators.png",
-  },
-  {
-    label: "Water",
-    href: "/products?group=water",
-    detail: "Water listings",
-    icon: Droplets,
-    image: "/claude-storefront/banners/water.png",
   },
   {
     label: "Vial Cases",
@@ -270,11 +262,19 @@ export function VideoHero({ featuredProducts = [] }: VideoHeroProps) {
         }
         .hero-categories {
           display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
+          grid-template-columns: repeat(6, minmax(0, 1fr));
           gap: 16px;
+        }
+        /* Five tiles: three across, then two centered underneath. */
+        .hero-category-tile:nth-child(4) {
+          grid-column: 2 / span 2;
+        }
+        .hero-category-tile:nth-child(5) {
+          grid-column: 4 / span 2;
         }
         .hero-category-tile {
           display: grid;
+          grid-column: span 2;
           grid-template-rows: 136px auto;
           gap: 0;
           align-items: stretch;
@@ -434,6 +434,16 @@ export function VideoHero({ featuredProducts = [] }: VideoHeroProps) {
           .hero-categories {
             grid-template-columns: repeat(2, minmax(0, 1fr));
           }
+          .hero-category-tile,
+          .hero-category-tile:nth-child(4),
+          .hero-category-tile:nth-child(5) {
+            grid-column: auto;
+          }
+          .hero-category-tile:last-child {
+            grid-column: 1 / -1;
+            width: min(50%, 100%);
+            justify-self: center;
+          }
         }
         @media (max-width: 560px) {
           .hero-showcase-shell {
@@ -465,6 +475,11 @@ export function VideoHero({ featuredProducts = [] }: VideoHeroProps) {
           }
           .hero-categories {
             grid-template-columns: 1fr;
+          }
+          .hero-category-tile:last-child {
+            grid-column: auto;
+            width: 100%;
+            justify-self: stretch;
           }
           .hero-category-tile {
             min-height: 212px;

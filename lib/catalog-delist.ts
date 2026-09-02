@@ -9,8 +9,16 @@
 // run it in the browser.
 // ============================================================
 
-/** Whole collections withdrawn from the storefront. */
-export const DELISTED_COLLECTIONS: ReadonlySet<string> = new Set(['sprays'])
+/**
+ * Whole collections withdrawn from the storefront. Water covers BAC Water and
+ * Saline: the group came off the site on 2026-09-02 along with the sprays.
+ */
+export const DELISTED_COLLECTIONS: ReadonlySet<string> = new Set([
+  'sprays',
+  'water',
+  // legacy alias the catalog used for the water collection
+  'other',
+])
 
 /** Individual SKUs withdrawn from the storefront: every BAC Water size plus every spray. */
 export const DELISTED_PRODUCT_SLUGS: ReadonlySet<string> = new Set([

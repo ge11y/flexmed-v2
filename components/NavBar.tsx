@@ -27,7 +27,6 @@ const SHOP_LINKS = [
   { label: "Peptide Blends", href: "/products?group=blends" },
   { label: "Bio Regulators", href: "/products?group=bio_regulators" },
   { label: "Topicals", href: "/products?group=topicals" },
-  { label: "Water", href: "/products?group=water" },
   { label: "Vial Cases", href: "/vial-cases" },
 ];
 
