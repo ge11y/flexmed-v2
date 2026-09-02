@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { CATALOG_COA_BUCKET, getCatalogCoAObjectName, getCatalogCoAObjectNames } from '@/lib/catalog-assets'
 import { hasPublishedCoA } from '@/lib/data-testing'
+import { isDelistedProductSlug } from '@/lib/catalog-delist'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 interface Context {
@@ -9,6 +10,10 @@ interface Context {
 
 export async function GET(request: Request, context: Context) {
   const { slug } = await context.params
+  if (isDelistedProductSlug(slug)) {
+    return NextResponse.json({ ok: false, error: 'COA not found.' }, { status: 404 })
+  }
+
   const supabase = getSupabaseAdmin()
   const fallback = hasPublishedCoA(slug) ? `/coa/${slug}` : null
   const requestedFile = new URL(request.url).searchParams.get('file')

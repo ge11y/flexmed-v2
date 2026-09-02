@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { PUBLIC_SLUGS, getProductImageSrc, getProductHoverSpinFrames } from '@/lib/data-products'
 import { getLiveProductBySlug, getLiveProductVariants } from '@/lib/catalog-live'
+import { isDelistedProductSlug } from '@/lib/catalog-delist'
 import { isLowStock } from '@/lib/inventory-state'
 import { getProductCoALink, getTestingRecordsForProduct, hasPublishedCoA } from '@/lib/data-testing'
 import { getCatalogCoAObjectNames } from '@/lib/catalog-assets'
@@ -89,6 +90,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
+  if (isDelistedProductSlug(slug)) return { title: 'Product Not Found' }
   const product = await getLiveProductBySlug(slug)
   if (!product) return { title: 'Product Not Found' }
   const familyVariants = await getLiveProductVariants(product)
@@ -116,6 +118,7 @@ function cleanValue(val: string | undefined | null): string | null {
 
 export default async function ProductDetailPage({ params }: Props) {
   const { slug } = await params
+  if (isDelistedProductSlug(slug)) notFound()
   const product = await getLiveProductBySlug(slug)
   if (!product || product.publicVisible === false) notFound()
 

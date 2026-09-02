@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { CART_STORAGE_KEY, type CartItem, getCartItemCount, getCartLineKey, getCartSubtotal } from '@/lib/cart'
+import { isDelistedProductSlug } from '@/lib/catalog-delist'
 
 type CartContextValue = {
   items: CartItem[]
@@ -20,7 +21,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (typeof window === 'undefined') return []
     try {
       const raw = window.localStorage.getItem(CART_STORAGE_KEY)
-      return raw ? (JSON.parse(raw) as CartItem[]) : []
+      const stored = raw ? (JSON.parse(raw) as CartItem[]) : []
+      // Drop lines for products withdrawn from sale so a stale cart cannot
+      // carry them into checkout.
+      return stored.filter((item) => (item.itemType ?? 'product') !== 'product' || !isDelistedProductSlug(item.slug))
     } catch {
       return []
     }

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Menu, Search, ShoppingCart, UserRound, X } from "lucide-react";
 import { useCart } from "@/components/CartProvider";
+import { isDelistedCatalogEntry } from "@/lib/catalog-delist";
 
 type SearchSuggestion = {
   slug: string;
@@ -14,6 +15,9 @@ type SearchSuggestion = {
   strength: number | null;
   unit: string;
   collection: string;
+  formatType?: string;
+  sku?: string;
+  variantGroup?: string | null;
   publicVisible?: boolean;
   archived?: boolean;
 };
@@ -21,10 +25,8 @@ type SearchSuggestion = {
 const SHOP_LINKS = [
   { label: "Peptides", href: "/products?group=peptides" },
   { label: "Peptide Blends", href: "/products?group=blends" },
-  { label: "Sprays", href: "/products?group=sprays" },
   { label: "Bio Regulators", href: "/products?group=bio_regulators" },
   { label: "Topicals", href: "/products?group=topicals" },
-  { label: "Water", href: "/products?group=water" },
   { label: "Vial Cases", href: "/vial-cases" },
 ];
 
@@ -79,7 +81,7 @@ export function NavBar() {
         if (cancelled) return;
         const records = result.records ?? [];
         const matches = records
-          .filter((record) => record.publicVisible !== false && !record.archived)
+          .filter((record) => record.publicVisible !== false && !record.archived && !isDelistedCatalogEntry(record))
           .filter((record) => {
             const haystack = [
               record.displayName,
@@ -116,7 +118,7 @@ export function NavBar() {
     setSearchOpen(false);
     setMenuOpen(false);
     // Search must span the whole catalog. Scoping it to the peptides group made
-    // blends, sprays, topicals and water return "No catalog listings found"
+    // blends, topicals and water return "No catalog listings found"
     // unless the shopper had already guessed the right category tab.
     router.push(`/products?q=${encodeURIComponent(query)}`);
   }

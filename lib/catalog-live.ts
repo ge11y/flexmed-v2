@@ -14,6 +14,7 @@ import { getCatalogAssetSnapshots, getCatalogImageProxyUrl, getCatalogUploadedIm
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { applyPromosToProduct, getActiveSitePromos } from '@/lib/site-promos'
 import { getInventoryStatusFromCount } from '@/lib/inventory-state'
+import { isDelistedCatalogEntry } from '@/lib/catalog-delist'
 
 type CatalogSourceRow = Partial<CatalogInventoryRecord> & {
   sku?: string
@@ -710,7 +711,9 @@ export const getLiveCatalogInventoryRecords = cache(async (): Promise<CatalogInv
       coaUrl: assetSnapshots[record.slug]?.coaUrl ?? record.coaUrl,
       coaSource: assetSnapshots[record.slug]?.coaSource ?? record.coaSource,
     }))
-    .filter((record) => !record.archived)
+    // Withdrawn products never reach the storefront, checkout, or search, even
+    // if the shared catalog still carries them as live rows.
+    .filter((record) => !record.archived && !isDelistedCatalogEntry(record))
     .sort((a, b) => a.displayName.localeCompare(b.displayName))
 })
 

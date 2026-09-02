@@ -7,6 +7,7 @@ import { PRODUCTS } from '@/lib/data-products'
 import { CoAPageCanvas } from '@/components/CoAPageCanvas'
 import { getCatalogCoAObjectNames } from '@/lib/catalog-assets'
 import { getLiveProductBySlug, getLiveProductVariants } from '@/lib/catalog-live'
+import { isDelistedProductSlug } from '@/lib/catalog-delist'
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -28,6 +29,7 @@ function getFallbackDisplayName(slug: string) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
+  if (isDelistedProductSlug(slug)) return { title: 'CoA Not Found' }
   const product = PRODUCTS[slug] ?? (await getLiveProductBySlug(slug))
   const displayName = product?.displayName ?? getFallbackDisplayName(slug)
   return {
@@ -38,6 +40,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProductCoAPage({ params }: Props) {
   const { slug } = await params
+  // Withdrawn products keep no public CoA page, even if a certificate was uploaded for them.
+  if (isDelistedProductSlug(slug)) notFound()
   const product = PRODUCTS[slug] ?? (await getLiveProductBySlug(slug))
   let effectiveCoaSlug = slug
   let effectiveCoaProduct = product

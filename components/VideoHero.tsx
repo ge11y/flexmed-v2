@@ -8,12 +8,10 @@ import {
   BadgeCheck,
   Beaker,
   Dna,
-  Droplets,
   FlaskConical,
   Layers3,
   ShieldCheck,
   Sparkles,
-  SprayCan,
 } from "lucide-react";
 import { getProductImageSrc } from "@/lib/data-products";
 import { isLowStock } from "@/lib/inventory-state";
@@ -39,13 +37,6 @@ const CATEGORY_LINKS = [
     image: "/claude-storefront/banners/blends.png",
   },
   {
-    label: "Sprays",
-    href: "/products?group=sprays",
-    detail: "Nasal spray format",
-    icon: SprayCan,
-    image: "/claude-storefront/banners/sprays.png",
-  },
-  {
     label: "Topicals",
     href: "/products?group=topicals",
     detail: "Topical research",
@@ -59,13 +50,6 @@ const CATEGORY_LINKS = [
     detail: "Regulator catalog",
     icon: Dna,
     image: "/claude-storefront/banners/bioregulators.png",
-  },
-  {
-    label: "Water",
-    href: "/products?group=water",
-    detail: "Water listings",
-    icon: Droplets,
-    image: "/claude-storefront/banners/water.png",
   },
   {
     label: "Vial Cases",
@@ -112,8 +96,9 @@ export function VideoHero({ featuredProducts = [] }: VideoHeroProps) {
     const video = videoRef.current;
     if (!video) return;
 
-    video.playbackRate = 0.55;
-
+    // The slow tempo is baked into /public/hero-video.mp4 itself. Slowing the
+    // 24fps source with playbackRate made the browser hold each frame for an
+    // uneven number of refreshes, which read as a stutter.
     const playVideo = async () => {
       try {
         await video.play();
@@ -163,7 +148,6 @@ export function VideoHero({ featuredProducts = [] }: VideoHeroProps) {
           object-fit: cover;
           z-index: -1;
           transform: scale(1.02);
-          filter: saturate(1.12) contrast(1.02);
         }
         .hero-showcase-shell {
           position: relative;
@@ -278,11 +262,19 @@ export function VideoHero({ featuredProducts = [] }: VideoHeroProps) {
         }
         .hero-categories {
           display: grid;
-          grid-template-columns: repeat(4, minmax(0, 1fr));
+          grid-template-columns: repeat(6, minmax(0, 1fr));
           gap: 16px;
+        }
+        /* Five tiles: three across, then two centered underneath. */
+        .hero-category-tile:nth-child(4) {
+          grid-column: 2 / span 2;
+        }
+        .hero-category-tile:nth-child(5) {
+          grid-column: 4 / span 2;
         }
         .hero-category-tile {
           display: grid;
+          grid-column: span 2;
           grid-template-rows: 136px auto;
           gap: 0;
           align-items: stretch;
@@ -293,7 +285,6 @@ export function VideoHero({ featuredProducts = [] }: VideoHeroProps) {
           background: linear-gradient(165deg,#265291,#1A3E74);
           color: #f5fbff;
           text-decoration: none;
-          backdrop-filter: blur(16px);
           box-shadow: 0 20px 50px rgba(0,0,0,.26);
           overflow: hidden;
           transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
@@ -354,7 +345,6 @@ export function VideoHero({ featuredProducts = [] }: VideoHeroProps) {
           color: #f6fbff;
           text-decoration: none;
           box-shadow: 0 20px 48px rgba(0,0,0,0.26);
-          backdrop-filter: blur(18px);
           display: grid;
           grid-template-columns: minmax(0, 1fr) 170px;
           gap: 12px;
@@ -444,6 +434,11 @@ export function VideoHero({ featuredProducts = [] }: VideoHeroProps) {
           .hero-categories {
             grid-template-columns: repeat(2, minmax(0, 1fr));
           }
+          .hero-category-tile,
+          .hero-category-tile:nth-child(4),
+          .hero-category-tile:nth-child(5) {
+            grid-column: auto;
+          }
           .hero-category-tile:last-child {
             grid-column: 1 / -1;
             width: min(50%, 100%);
@@ -518,10 +513,18 @@ export function VideoHero({ featuredProducts = [] }: VideoHeroProps) {
         }
       `}</style>
 
-      <video ref={videoRef} className="hero-showcase-video" autoPlay muted loop playsInline preload="auto" poster="/hero-video-poster.png">
+      <video
+        ref={videoRef}
+        className="hero-showcase-video"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        poster="/hero-video-poster.jpg"
+        aria-hidden="true"
+      >
         <source src="/hero-video.mp4" type="video/mp4" />
-        <source src="/videos/header-banner.mp4" type="video/mp4" />
-        <source src="/videos/header-banner.mov" type="video/quicktime" />
       </video>
 
       <div className="hero-showcase-shell">

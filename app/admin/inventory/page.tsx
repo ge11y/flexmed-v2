@@ -21,13 +21,12 @@ const CATALOG_COA_BUCKET = 'catalog-coas'
 const COLLECTION_OPTIONS: Array<{ value: CatalogInventoryRecord['collection']; label: string }> = [
   { value: 'peptides', label: 'Peptides' },
   { value: 'blends', label: 'Blends' },
-  { value: 'sprays', label: 'Sprays' },
   { value: 'topicals', label: 'Topicals' },
   { value: 'bio_regulators', label: 'Bio Regulators' },
   { value: 'water', label: 'Water' },
 ]
 
-const FORMAT_OPTIONS = ['vial', 'nasal spray', 'blend', 'topical', 'capsule', 'water']
+const FORMAT_OPTIONS = ['vial', 'blend', 'topical', 'capsule', 'water']
 
 const EMPTY_LISTING_FORM = {
   slug: '',

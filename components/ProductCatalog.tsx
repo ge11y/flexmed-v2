@@ -15,10 +15,8 @@ type CatalogGroup =
   | "all"
   | "peptides"
   | "blends"
-  | "sprays"
   | "topicals"
-  | "bio_regulators"
-  | "water";
+  | "bio_regulators";
 
 type PriceFilter = "all" | "under_50" | "50_to_99" | "100_plus";
 
@@ -102,10 +100,8 @@ export function ProductCatalog({ products, variant = "dark" }: Props) {
             { id: "all", label: "View All" },
             { id: "peptides", label: "Peptides" },
             { id: "blends", label: "Peptide Blends" },
-            { id: "sprays", label: "Nasal Sprays" },
             { id: "topicals", label: "Topicals" },
             { id: "bio_regulators", label: "Bio Regulators" },
-            { id: "water", label: "Water" },
           ].map((item) => {
             const active = group === item.id;
             return (
@@ -323,24 +319,19 @@ export function ProductCatalog({ products, variant = "dark" }: Props) {
 
 function getCatalogGroup(product: Product): CatalogGroup {
   if (isBioRegulator(product)) return "bio_regulators";
-  if (product.category === "water" || product.category === "other") return "water";
   if (product.category === "topicals" || product.category === "serums" || product.formatType.toLowerCase().includes("serum")) return "topicals";
   if (product.category === "topicals" || product.formatType.toLowerCase().includes("topical")) return "topicals";
-  if (product.formatType.toLowerCase().includes("spray")) return "sprays";
   if (product.formatType.toLowerCase().includes("blend")) return "blends";
   return "peptides";
 }
 
 function normalizeCatalogGroup(value?: string | null): CatalogGroup {
-  if (value === "other") return "water";
   if (value === "serums") return "topicals";
   if (
     value === "peptides" ||
     value === "blends" ||
-    value === "sprays" ||
     value === "topicals" ||
-    value === "bio_regulators" ||
-    value === "water"
+    value === "bio_regulators"
   ) {
     return value;
   }
@@ -348,7 +339,6 @@ function normalizeCatalogGroup(value?: string | null): CatalogGroup {
 }
 
 function normalizeCategoryFilter(value: string) {
-  if (value === "other") return "water";
   if (value === "serums") return "topicals";
   return value;
 }
