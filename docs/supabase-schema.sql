@@ -204,6 +204,8 @@ alter table public.inventory_purchase_logs add column if not exists price_per_vi
 alter table public.inventory_purchase_logs add column if not exists price_per_kit numeric(10, 2) not null default 0;
 alter table public.inventory_purchase_logs add column if not exists arrived_at timestamptz;
 alter table public.inventory_purchase_logs add column if not exists inventory_applied_at timestamptz;
+-- Purchase-cost ledger: optional note per purchase (lot number, reason for the order).
+alter table public.inventory_purchase_logs add column if not exists note text not null default '';
 
 create table if not exists public.vial_cases (
   id uuid primary key default gen_random_uuid(),

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AdminShell } from '@/components/AdminShell'
+import { getPurchaseMutationPolicy } from '@/lib/purchase-ledger'
 import type { ManualOrderSubmission, ManualPaymentProofSubmission } from '@/lib/manual-orders'
 import type { CatalogInventoryRecord } from '@/lib/catalog-admin'
 import type { AdminSettingsPayload } from '@/lib/admin-settings'
@@ -293,6 +294,11 @@ export default function AdminOverviewPage() {
   }
 
   function editCostEntry(entry: CostLog) {
+    const policy = getPurchaseMutationPolicy(entry)
+    if (!policy.canEditCost) {
+      setCostMessage(policy.lockedReason ?? 'This purchase is locked.')
+      return
+    }
     setEditingCostId(entry.id)
     setCostForm({
       slug: entry.slug,
@@ -309,6 +315,12 @@ export default function AdminOverviewPage() {
   }
 
   async function deleteCostEntry(id: string) {
+    const entry = costLogs.find((item) => item.id === id)
+    const policy = entry ? getPurchaseMutationPolicy(entry) : null
+    if (policy && !policy.canDelete) {
+      setCostMessage(policy.lockedReason ?? 'This purchase is locked.')
+      return
+    }
     const confirmed = window.confirm('Delete this supply order entry?')
     if (!confirmed) return
 
@@ -631,12 +643,18 @@ export default function AdminOverviewPage() {
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-                    <button type="button" className="fm-btn-outline" style={{ padding: '8px 10px', fontSize: '12px' }} onClick={() => editCostEntry(entry)}>
-                      Edit
-                    </button>
-                    <button type="button" className="fm-btn-outline" style={{ padding: '8px 10px', fontSize: '12px' }} onClick={() => deleteCostEntry(entry.id)}>
-                      Delete
-                    </button>
+                    {getPurchaseMutationPolicy(entry).canEditCost ? (
+                      <>
+                        <button type="button" className="fm-btn-outline" style={{ padding: '8px 10px', fontSize: '12px' }} onClick={() => editCostEntry(entry)}>
+                          Edit
+                        </button>
+                        <button type="button" className="fm-btn-outline" style={{ padding: '8px 10px', fontSize: '12px' }} onClick={() => deleteCostEntry(entry.id)}>
+                          Delete
+                        </button>
+                      </>
+                    ) : (
+                      <span style={{ color: 'var(--text-muted)', fontSize: '12px', alignSelf: 'center' }}>Received · locked as cost history</span>
+                    )}
                   </div>
                 </div>
               ))

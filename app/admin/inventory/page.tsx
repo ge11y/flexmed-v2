@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
+import { type ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   applyCatalogInventoryOverrides,
   buildCatalogCsv,
@@ -15,6 +15,8 @@ import type { ProductStatus } from '@/lib/types'
 import { getDefaultAdminSettings, type AdminSettingsPayload } from '@/lib/admin-settings'
 import { getInventoryStatusFromCount } from '@/lib/inventory-state'
 import { supabase } from '@/lib/supabase'
+import { PurchaseLedger } from '@/components/PurchaseLedger'
+import { formatMoney, groupPurchaseRowsBySlug, summarizePurchaseLedger, type PurchaseLedgerRow } from '@/lib/purchase-ledger'
 
 const CATALOG_COA_BUCKET = 'catalog-coas'
 
@@ -168,25 +170,6 @@ function multilineToLines(value: string) {
     .filter(Boolean)
 }
 
-function getSupplyOrderUnits(log: {
-  vial_quantity?: number | null
-  kit_quantity?: number | null
-  units_per_kit?: number | null
-}) {
-  return Number(log.vial_quantity ?? 0) + Number(log.kit_quantity ?? 0) * Number(log.units_per_kit ?? 10)
-}
-
-function getSupplyOrderAveragePricePerVial(log: {
-  vial_quantity?: number | null
-  kit_quantity?: number | null
-  units_per_kit?: number | null
-  cost_paid?: string | number | null
-}) {
-  const totalUnits = getSupplyOrderUnits(log)
-  if (totalUnits <= 0) return 0
-  return Number(log.cost_paid ?? 0) / totalUnits
-}
-
 function getRecordUpdatedTime(record: CatalogInventoryRecord) {
   const parsed = Date.parse(record.updatedAt ?? '')
   return Number.isFinite(parsed) ? parsed : 0
@@ -281,23 +264,7 @@ export default function AdminInventoryPage() {
   const [autoSyncing, setAutoSyncing] = useState(false)
   const [autoSyncStatus, setAutoSyncStatus] = useState<'idle' | 'pending' | 'saving' | 'saved' | 'error'>('idle')
   const [lastAutoSyncAt, setLastAutoSyncAt] = useState('')
-  const [costLogs, setCostLogs] = useState<
-    Array<{
-      id: string
-      slug: string
-      product_name: string
-      strength_label: string
-      vendor_name?: string
-      quantity_ordered: number
-      ordered_on: string
-      vial_quantity?: number
-      kit_quantity?: number
-      price_per_vial?: string | number
-      price_per_kit?: string | number
-      cost_paid: string
-      created_at: string
-    }>
-  >([])
+  const [costLogs, setCostLogs] = useState<PurchaseLedgerRow[]>([])
   const [expandedFamilies, setExpandedFamilies] = useState<Record<string, boolean>>({})
   const [highlightedStrengthFamily, setHighlightedStrengthFamily] = useState<string | null>(null)
   const [familyStrengthDrafts, setFamilyStrengthDrafts] = useState<
@@ -410,18 +377,31 @@ export default function AdminInventoryPage() {
     void loadSettings()
   }, [])
 
+  const refreshCosts = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/inventory-costs', { cache: 'no-store' })
+      const result = (await response.json()) as { ok: boolean; logs?: PurchaseLedgerRow[] }
+      if (response.ok && result.ok) setCostLogs(result.logs ?? [])
+    } catch {
+      // Keep the last known ledger when the request fails.
+    }
+  }, [])
+
   useEffect(() => {
+    let active = true
     async function loadCosts() {
       try {
         const response = await fetch('/api/admin/inventory-costs', { cache: 'no-store' })
-        const result = (await response.json()) as { ok: boolean; logs?: typeof costLogs }
-        if (response.ok && result.ok) {
-          setCostLogs(result.logs ?? [])
-        }
-      } catch {}
+        const result = (await response.json()) as { ok: boolean; logs?: PurchaseLedgerRow[] }
+        if (active && response.ok && result.ok) setCostLogs(result.logs ?? [])
+      } catch {
+        // Keep the last known ledger when the request fails.
+      }
     }
-
     void loadCosts()
+    return () => {
+      active = false
+    }
   }, [])
 
   const records = useMemo(() => applyCatalogInventoryOverrides(baseRecords, overrides), [baseRecords, overrides])
@@ -529,71 +509,20 @@ export default function AdminInventoryPage() {
     }
   }, [records, settings])
 
-  const spendSummary = useMemo(() => {
-    const total = costLogs.reduce((sum, log) => sum + Number(log.cost_paid || 0), 0)
-    return {
-      entries: costLogs.length,
-      total,
-    }
-  }, [costLogs])
-  const costRollups = useMemo(() => {
-    const grouped = new Map<
-      string,
-      {
-        slug: string
-        productName: string
-        entries: number
-        latestDate: string
-        latestCost: number
-        averageCost: number
-        latestAveragePricePerVial: number
-        historicalAveragePricePerVial: number
-        totalUnits: number
-        totalSpend: number
-      }
-    >()
-
-    for (const log of costLogs) {
-      const current = grouped.get(log.slug)
-      const numericCost = Number(log.cost_paid || 0)
-      const orderUnits = getSupplyOrderUnits(log)
-      const orderAverage = getSupplyOrderAveragePricePerVial(log)
-      if (!current) {
-        grouped.set(log.slug, {
-          slug: log.slug,
-          productName: log.product_name,
-          entries: 1,
-          latestDate: log.ordered_on,
-          latestCost: numericCost,
-          averageCost: numericCost,
-          latestAveragePricePerVial: orderAverage,
-          historicalAveragePricePerVial: orderAverage,
-          totalUnits: orderUnits,
-          totalSpend: numericCost,
-        })
-        continue
-      }
-
-      const totalEntries = current.entries + 1
-      const nextAverage = (current.averageCost * current.entries + numericCost) / totalEntries
-      const nextTotalUnits = current.totalUnits + orderUnits
-      const nextTotalSpend = current.totalSpend + numericCost
-      const isLatest = current.latestDate < log.ordered_on
-      grouped.set(log.slug, {
-        ...current,
-        entries: totalEntries,
-        latestDate: isLatest ? log.ordered_on : current.latestDate,
-        latestCost: isLatest ? numericCost : current.latestCost,
-        averageCost: nextAverage,
-        latestAveragePricePerVial: isLatest ? orderAverage : current.latestAveragePricePerVial,
-        historicalAveragePricePerVial: nextTotalUnits > 0 ? nextTotalSpend / nextTotalUnits : 0,
-        totalUnits: nextTotalUnits,
-        totalSpend: nextTotalSpend,
-      })
-    }
-
-    return [...grouped.values()].sort((a, b) => a.productName.localeCompare(b.productName))
-  }, [costLogs])
+  const purchaseRowsBySlug = useMemo(() => groupPurchaseRowsBySlug(costLogs), [costLogs])
+  const ledgerSummaries = useMemo(
+    () =>
+      [...purchaseRowsBySlug.entries()]
+        .map(([slug, rows]) => ({
+          slug,
+          productName: rows[0]?.product_name ?? slug,
+          strengthLabel: rows[0]?.strength_label ?? '',
+          summary: summarizePurchaseLedger(rows),
+        }))
+        .sort((a, b) => a.productName.localeCompare(b.productName) || a.strengthLabel.localeCompare(b.strengthLabel)),
+    [purchaseRowsBySlug],
+  )
+  const ledgerTotalSpend = useMemo(() => ledgerSummaries.reduce((sum, item) => sum + item.summary.totalSpend, 0), [ledgerSummaries])
 
   function updateRecord(slug: string, patch: CatalogInventoryOverride) {
     setAutoSyncStatus('pending')
@@ -1544,6 +1473,7 @@ export default function AdminInventoryPage() {
       ]}
       teamNotes={[
         'Use Add Listing for a brand-new product family, and Add Strength inside an existing family for another mg option.',
+        'Purchase costs live in each strength\'s Info panel. Log every restock as a new purchase so the cost history stays complete; received purchases are never overwritten.',
         'The default view is meant for fast inventory counting, not deep product editing.',
         'Price, SKU, and count changes here become the public listing once the catalog is synced.',
         'Inventory status follows the count automatically, and Incoming only appears after a replenishment order is logged.',
@@ -2370,6 +2300,15 @@ export default function AdminInventoryPage() {
                           </div>
                         </div>
 
+                        <PurchaseLedger
+                          slug={record.slug}
+                          productName={record.displayName}
+                          strengthLabel={getStrengthLabelForRecord(record)}
+                          onHandNow={record.inventoryOnHand ?? null}
+                          rows={purchaseRowsBySlug.get(record.slug) ?? []}
+                          onChanged={refreshCosts}
+                        />
+
                         <div
                           style={{
                             display: 'grid',
@@ -2735,37 +2674,63 @@ export default function AdminInventoryPage() {
         <div className="card" style={{ padding: '18px', display: 'grid', gap: '14px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
             <div>
-              <div className="section-label">Supply Orders & Cost Rollup</div>
+              <div className="section-label">Purchase Cost Ledger</div>
               <div style={{ color: 'var(--text-secondary)', marginTop: '6px' }}>
-                The working supply tracker now lives on Overview so founder has one place to add vendor orders and mark products incoming.
+                Every restock is its own row and stays on record. The current cost is the most recent received purchase; open a strength&apos;s Info panel to see its full history or log a restock.
               </div>
             </div>
-            <a href="/admin" className="fm-btn-outline" style={{ textDecoration: 'none' }}>
-              Open Overview Tracker
+            <a href="/admin/supply" className="fm-btn-outline" style={{ textDecoration: 'none' }}>
+              Open Supply Orders
             </a>
           </div>
 
           <div style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>
-            {spendSummary.entries} entries · ${spendSummary.total.toFixed(2)} total
+            {costLogs.length} purchases · {formatMoney(ledgerTotalSpend)} total paid
           </div>
 
-          <div style={{ display: 'grid', gap: '10px' }}>
-            {costRollups.length === 0 ? (
-              <div style={{ color: 'var(--text-muted)' }}>No cost rollups yet.</div>
-            ) : (
-              costRollups.map((rollup) => (
-                <div key={rollup.slug} className="card" style={{ padding: '12px 14px', display: 'grid', gap: '6px' }}>
-                  <strong style={{ color: 'var(--text-primary)' }}>{rollup.productName}</strong>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>Entries: {rollup.entries}</div>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>Latest Cost: ${rollup.latestCost.toFixed(2)}</div>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>Average Cost: ${rollup.averageCost.toFixed(2)}</div>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>Latest Avg / Vial: ${rollup.latestAveragePricePerVial.toFixed(2)}</div>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>Historical Avg / Vial: ${rollup.historicalAveragePricePerVial.toFixed(2)}</div>
-                  <div style={{ color: 'var(--text-muted)', fontSize: '12px' }}>Latest Order Date: {rollup.latestDate}</div>
-                </div>
-              ))
-            )}
-          </div>
+          {ledgerSummaries.length === 0 ? (
+            <div style={{ color: 'var(--text-muted)' }}>No purchases logged yet.</div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ textAlign: 'left', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '11px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                    <th style={{ padding: '8px 10px' }}>Product</th>
+                    <th style={{ padding: '8px 10px' }}>Current cost / vial</th>
+                    <th style={{ padding: '8px 10px' }}>Average paid / vial</th>
+                    <th style={{ padding: '8px 10px' }}>Vials bought</th>
+                    <th style={{ padding: '8px 10px' }}>Total paid</th>
+                    <th style={{ padding: '8px 10px' }}>Purchases</th>
+                    <th style={{ padding: '8px 10px' }}>Last purchase</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ledgerSummaries.map(({ slug, productName, strengthLabel, summary }) => (
+                    <tr key={slug} style={{ borderTop: '1px solid var(--border)' }}>
+                      <td style={{ padding: '10px' }}>
+                        <strong style={{ color: 'var(--text-primary)' }}>{productName}</strong>
+                        <div style={{ color: 'var(--text-muted)', fontSize: '12px' }}>{strengthLabel}</div>
+                      </td>
+                      <td style={{ padding: '10px', color: 'var(--text-primary)', fontWeight: 600 }}>
+                        {summary.currentUnitCost === null ? '—' : formatMoney(summary.currentUnitCost)}
+                        {summary.currentBasis === 'ordered' ? (
+                          <div style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: 400 }}>ordered, not received yet</div>
+                        ) : null}
+                      </td>
+                      <td style={{ padding: '10px', color: 'var(--text-secondary)' }}>{summary.averageUnitCost === null ? '—' : formatMoney(summary.averageUnitCost)}</td>
+                      <td style={{ padding: '10px', color: 'var(--text-secondary)' }}>{summary.totalUnits}</td>
+                      <td style={{ padding: '10px', color: 'var(--text-secondary)' }}>{formatMoney(summary.totalSpend)}</td>
+                      <td style={{ padding: '10px', color: 'var(--text-secondary)' }}>{summary.entries}</td>
+                      <td style={{ padding: '10px', color: 'var(--text-secondary)' }}>
+                        {summary.lastPurchaseOn ?? '—'}
+                        {summary.lastVendor ? <div style={{ color: 'var(--text-muted)', fontSize: '12px' }}>{summary.lastVendor}</div> : null}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
     </AdminShell>
   )
