@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { AdminShell } from '@/components/AdminShell'
 import type { CatalogInventoryRecord } from '@/lib/catalog-admin'
+import { getPurchaseMutationPolicy } from '@/lib/purchase-ledger'
 
 type CostLog = {
   id: string
@@ -11,6 +12,7 @@ type CostLog = {
   product_name: string
   strength_label: string
   vendor_name?: string
+  note?: string | null
   status?: 'ordered' | 'arrived'
   vial_quantity?: number
   kit_quantity?: number
@@ -69,6 +71,7 @@ export default function AdminSupplyPage() {
     productName: '',
     strengthLabel: '',
     vendorName: '',
+    note: '',
     vialQuantity: '0',
     kitQuantity: '0',
     unitsPerKit: '10',
@@ -85,6 +88,7 @@ export default function AdminSupplyPage() {
       productName: '',
       strengthLabel: '',
       vendorName: '',
+      note: '',
       vialQuantity: '0',
       kitQuantity: '0',
       unitsPerKit: '10',
@@ -188,6 +192,7 @@ export default function AdminSupplyPage() {
             costForm.strengthLabel ||
             (selectedCostRecord ? `${selectedCostRecord.strength} ${selectedCostRecord.unit}` : ''),
           vendorName: costForm.vendorName,
+          note: costForm.note,
           vialQuantity: Number(costForm.vialQuantity || '0'),
           kitQuantity: Number(costForm.kitQuantity || '0'),
           unitsPerKit: Number(costForm.unitsPerKit || '10'),
@@ -237,12 +242,18 @@ export default function AdminSupplyPage() {
   }
 
   function editCostEntry(entry: CostLog) {
+    const policy = getPurchaseMutationPolicy(entry)
+    if (!policy.canEditCost) {
+      setCostMessage(policy.lockedReason ?? 'This purchase is locked.')
+      return
+    }
     setEditingCostId(entry.id)
     setCostForm({
       slug: entry.slug,
       productName: entry.product_name,
       strengthLabel: entry.strength_label,
       vendorName: entry.vendor_name ?? '',
+      note: entry.note ?? '',
       vialQuantity: String(entry.vial_quantity ?? 0),
       kitQuantity: String(entry.kit_quantity ?? 0),
       unitsPerKit: String(entry.units_per_kit ?? 10),
@@ -258,6 +269,12 @@ export default function AdminSupplyPage() {
   }
 
   async function deleteCostEntry(id: string) {
+    const entry = costLogs.find((item) => item.id === id)
+    const policy = entry ? getPurchaseMutationPolicy(entry) : null
+    if (policy && !policy.canDelete) {
+      setCostMessage(policy.lockedReason ?? 'This purchase is locked.')
+      return
+    }
     const confirmed = window.confirm('Delete this supply order entry?')
     if (!confirmed) return
 
@@ -291,6 +308,7 @@ export default function AdminSupplyPage() {
         'One kit defaults to 10 vials, but you can adjust that number per order.',
         'Incoming means the founder has placed the replenishment order but it has not landed yet.',
         'Inventory only increases when a supply order is marked arrived.',
+        'Every restock is a new supply order. Received orders can no longer be edited or deleted, so the purchase-cost history stays complete.',
       ]}
     >
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
@@ -323,7 +341,7 @@ export default function AdminSupplyPage() {
           <div className="section-label">{editingCostId ? 'Edit Supply Order' : 'New Supply Order'}</div>
           <div style={{ color: 'var(--text-secondary)', marginTop: '6px' }}>
             {editingCostId
-              ? 'Update the quantities, pricing, or vendor details here. If this order already arrived, inventory will be adjusted to match the edited totals.'
+              ? 'Update the quantities, pricing, or vendor details of an order that has not arrived yet. Received orders are locked as cost history; log a new order for a restock.'
               : 'Add vendor orders here. If you need something like BAC water first, add it in Inventory, then come back and select it here.'}
           </div>
         </div>
@@ -363,6 +381,11 @@ export default function AdminSupplyPage() {
               <label className="section-label">Vendor</label>
               <input value={costForm.vendorName} onChange={(event) => setCostForm((current) => ({ ...current, vendorName: event.target.value }))} placeholder="Distributor or vendor" style={{ borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-primary)', padding: '12px 14px', fontSize: '14px' }} />
             </div>
+          </div>
+
+          <div style={{ display: 'grid', gap: '8px' }}>
+            <label className="section-label">Note</label>
+            <input value={costForm.note} onChange={(event) => setCostForm((current) => ({ ...current, note: event.target.value }))} placeholder="Optional, e.g. lot number or why this order was placed" style={{ borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-primary)', padding: '12px 14px', fontSize: '14px' }} />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '10px' }}>
@@ -521,6 +544,12 @@ export default function AdminSupplyPage() {
                       <div className="section-label" style={{ fontSize: '11px' }}>Arrived</div>
                       <div style={{ marginTop: '4px' }}>{entry.arrived_at ? new Date(entry.arrived_at).toLocaleString() : 'Not yet'}</div>
                     </div>
+                    {entry.note ? (
+                      <div style={{ color: 'var(--text-secondary)', fontSize: '13px', gridColumn: '1 / -1' }}>
+                        <div className="section-label" style={{ fontSize: '11px' }}>Note</div>
+                        <div style={{ marginTop: '4px' }}>{entry.note}</div>
+                      </div>
+                    ) : null}
                   </div>
 
                   <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
@@ -529,12 +558,18 @@ export default function AdminSupplyPage() {
                         {receivingId === entry.id ? 'Applying...' : 'Mark Arrived'}
                       </button>
                     ) : null}
-                    <button type="button" className="fm-btn-outline" style={{ padding: '8px 10px', fontSize: '12px' }} onClick={() => editCostEntry(entry)}>
-                      Edit
-                    </button>
-                    <button type="button" className="fm-btn-outline" style={{ padding: '8px 10px', fontSize: '12px' }} onClick={() => deleteCostEntry(entry.id)}>
-                      Delete
-                    </button>
+                    {getPurchaseMutationPolicy(entry).canEditCost ? (
+                      <>
+                        <button type="button" className="fm-btn-outline" style={{ padding: '8px 10px', fontSize: '12px' }} onClick={() => editCostEntry(entry)}>
+                          Edit
+                        </button>
+                        <button type="button" className="fm-btn-outline" style={{ padding: '8px 10px', fontSize: '12px' }} onClick={() => deleteCostEntry(entry.id)}>
+                          Delete
+                        </button>
+                      </>
+                    ) : (
+                      <span style={{ color: 'var(--text-muted)', fontSize: '12px', alignSelf: 'center' }}>Received · locked as cost history</span>
+                    )}
                   </div>
                 </div>
               )
