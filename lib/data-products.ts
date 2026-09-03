@@ -2243,28 +2243,56 @@ export function getProductBannerSrc(slug: string, type: 'heroBanner' | 'sectionD
 // hoverSpinFrames come from PRODUCT_IMAGES — add to that map to enable.
 // ──────────────────────────────────────────────────────────────
 
-export function getProductImageSrc(product: Product): string {
-  if (product.image && !product.image.includes('REQUIRED') && product.image !== PLACEHOLDER_PRODUCT_IMAGE) {
-    return product.image
+// ─── Own-asset guard ──────────────────────────────────────────
+// Renders and uploaded photos live under the product's own slug
+// (/products/<slug>/… or /api/catalog-assets/image/<slug>). A variant
+// must never show a sibling's asset: when its own is missing it gets
+// the generic placeholder, not another SKU's label.
+// ───────────────────────────────────────────────────────────────
+
+const PRODUCT_ASSET_OWNER_PATTERNS = [/^\/api\/catalog-assets\/image\/([^/?#]+)/, /^\/products\/([^/?#]+)\//]
+
+/** The slug an asset path belongs to, or null for shared assets such as the placeholder. */
+export function getProductAssetOwnerSlug(src: string | null | undefined): string | null {
+  if (!src) return null
+  for (const pattern of PRODUCT_ASSET_OWNER_PATTERNS) {
+    const match = src.match(pattern)
+    if (match) return match[1]
   }
-  if (PRODUCT_IMAGES[product.slug]?.front) {
-    return PRODUCT_IMAGES[product.slug].front
+  return null
+}
+
+/** True when the asset is the product's own or is not tied to any product. */
+export function isOwnProductAsset(src: string | null | undefined, slug: string): boolean {
+  const owner = getProductAssetOwnerSlug(src)
+  return owner === null || owner === slug
+}
+
+export function getProductImageSrc(product: Product): string {
+  const ownImage = isOwnProductAsset(product.image, product.slug) ? product.image : ''
+  if (ownImage && !ownImage.includes('REQUIRED') && ownImage !== PLACEHOLDER_PRODUCT_IMAGE) {
+    return ownImage
+  }
+  const staticFront = PRODUCT_IMAGES[product.slug]?.front
+  if (staticFront && isOwnProductAsset(staticFront, product.slug)) {
+    return staticFront
   }
   if (PLACEHOLDER_RENDER_SLUGS.includes(product.slug as (typeof PLACEHOLDER_RENDER_SLUGS)[number])) {
     return PLACEHOLDER_PRODUCT_IMAGE
   }
-  if (product.image && !product.image.includes('REQUIRED')) {
-    return product.image
+  if (ownImage && !ownImage.includes('REQUIRED')) {
+    return ownImage
   }
   return PLACEHOLDER_PRODUCT_IMAGE
 }
 
 export function getProductSideSrc(product: Product): string {
-  return PRODUCT_IMAGES[product.slug]?.side || ''
+  const side = PRODUCT_IMAGES[product.slug]?.side
+  return side && isOwnProductAsset(side, product.slug) ? side : ''
 }
 
 export function getProductHoverSpinFrames(product: Product): string[] {
-  return PRODUCT_IMAGES[product.slug]?.hoverSpinFrames ?? []
+  return (PRODUCT_IMAGES[product.slug]?.hoverSpinFrames ?? []).filter((frame) => isOwnProductAsset(frame, product.slug))
 }
 
 export function isPlaceholderProductImage(product: Product): boolean {
