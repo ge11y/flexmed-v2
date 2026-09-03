@@ -1,10 +1,10 @@
 import { cookies } from "next/headers"
+import { ADMIN_AUTH_COOKIE, ADMIN_SESSION_VALUE, isAdminSessionValue } from "@/lib/admin-session"
 
-export const ADMIN_AUTH_COOKIE = "flexmed_admin_auth_v1"
+export { ADMIN_AUTH_COOKIE }
 
 const ADMIN_USERNAME = "FlexMedAdmin"
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD
-const ADMIN_SESSION_VALUE = "authenticated"
 
 export function isValidAdminCredentials(username: string, password: string) {
   // No fallback: if ADMIN_PASSWORD is unset, admin auth is closed rather than open.
@@ -13,7 +13,7 @@ export function isValidAdminCredentials(username: string, password: string) {
 }
 
 export async function hasAdminSession() {
-  return (await cookies()).get(ADMIN_AUTH_COOKIE)?.value === ADMIN_SESSION_VALUE
+  return isAdminSessionValue((await cookies()).get(ADMIN_AUTH_COOKIE)?.value)
 }
 
 export function getAdminSessionValue() {

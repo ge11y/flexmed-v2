@@ -64,3 +64,6 @@ next-env.d.ts
 /scripts/audit-supply-flow-http.mjs
 /scripts/fetch-debug-product-http.mjs
 /scripts/inspect-catalog-family-http.mjs
+
+# Next.js request proxy (admin session gate) lives at the repo root; keep it despite the rule above.
+!/proxy.ts
