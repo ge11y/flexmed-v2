@@ -1,8 +1,19 @@
+// ============================================================
+// Live catalog
+//
+// Storefront reads ('storefront', the default) come from the short-lived
+// Data Cache in lib/storefront-cache.ts; checkout, order submission and the
+// admin pass 'fresh' to bypass it. A product's image is always its own
+// upload, its own render, or the placeholder — never a sibling variant's.
+// ============================================================
+
 import {
+  PLACEHOLDER_PRODUCT_IMAGE,
   PRODUCTS,
   PUBLIC_SLUGS,
   getProductImageSrc,
   isBioRegulator,
+  isOwnProductAsset,
   isPlaceholderProductImage,
 } from '@/lib/data-products'
 import { cache } from 'react'
@@ -10,9 +21,11 @@ import { SITE_SETTINGS } from '@/lib/data-site'
 import { getProductCoALink } from '@/lib/data-testing'
 import type { Product } from '@/lib/types'
 import type { CatalogInventoryRecord, CatalogInventoryOverride } from '@/lib/catalog-admin'
-import { getCatalogAssetSnapshots, getCatalogImageProxyUrl, getCatalogUploadedImageSlugSet } from '@/lib/catalog-assets'
+import { buildCatalogAssetSnapshots, fetchCatalogAssetIndex, getCatalogImageProxyUrl, type CatalogAssetIndex } from '@/lib/catalog-assets'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
-import { applyPromosToProduct, getActiveSitePromos } from '@/lib/site-promos'
+import { applyPromosToProduct } from '@/lib/site-promos'
+import { STOREFRONT_CACHE_TAGS, cacheStorefrontRead, type CatalogFreshness } from '@/lib/storefront-cache'
+import { getStorefrontPromos } from '@/lib/storefront-data'
 import { getInventoryStatusFromCount } from '@/lib/inventory-state'
 import { isDelistedCatalogEntry } from '@/lib/catalog-delist'
 
@@ -186,53 +199,6 @@ function getRepresentativeFamilyName(products: Product[]) {
     .map((product) => getProductFamilyName(product))
     .filter(Boolean)
     .sort((a, b) => a.length - b.length || a.localeCompare(b))[0] ?? ''
-}
-
-function getRepresentativeFamilyImageProduct(products: Product[]) {
-  return [...products].sort((a, b) => {
-    const aUploaded = a.image?.startsWith('/api/catalog-assets/image/') ? 1 : 0
-    const bUploaded = b.image?.startsWith('/api/catalog-assets/image/') ? 1 : 0
-    if (aUploaded !== bUploaded) return bUploaded - aUploaded
-
-    if (aUploaded && bUploaded) {
-      const aUpdatedAt = Date.parse(a.updatedAt ?? '')
-      const bUpdatedAt = Date.parse(b.updatedAt ?? '')
-      if (Number.isFinite(aUpdatedAt) || Number.isFinite(bUpdatedAt)) {
-        return (Number.isFinite(bUpdatedAt) ? bUpdatedAt : 0) - (Number.isFinite(aUpdatedAt) ? aUpdatedAt : 0)
-      }
-    }
-
-    const aPlaceholder = isPlaceholderProductImage(a) ? 1 : 0
-    const bPlaceholder = isPlaceholderProductImage(b) ? 1 : 0
-    if (aPlaceholder !== bPlaceholder) return aPlaceholder - bPlaceholder
-
-    if (a.strength !== b.strength) return a.strength - b.strength
-    return a.displayName.localeCompare(b.displayName)
-  })[0] ?? null
-}
-
-function harmonizeFamilyImages(products: Product[]) {
-  const familyMap = new Map<string, Product[]>()
-
-  for (const product of products) {
-    const familyKey = getProductFamilyKey(product)
-    const existing = familyMap.get(familyKey)
-    if (existing) {
-      existing.push(product)
-    } else {
-      familyMap.set(familyKey, [product])
-    }
-  }
-
-  return [...familyMap.values()].flatMap((familyProducts) => {
-    const familyImageProduct = getRepresentativeFamilyImageProduct(familyProducts)
-    if (!familyImageProduct?.image) return familyProducts
-
-    return familyProducts.map((product) => ({
-      ...product,
-      image: familyImageProduct.image,
-    }))
-  })
 }
 
 function toNullableNumber(value: unknown): number | null {
@@ -516,7 +482,7 @@ function createProductFromCatalogRecord(record: CatalogInventoryRecord): Product
     features: ['Standardized label format', 'Research-first presentation', 'COA-linked workflow'],
     accentColor: 'FlexMed Blue',
     accentColorHex: '#2a4fae',
-    image: record.imageUrl,
+    image: isOwnProductAsset(record.imageUrl, record.slug) ? record.imageUrl : PLACEHOLDER_PRODUCT_IMAGE,
     hoverSpinFrames: [],
     publishStatus: 'confirmed',
     needsFounderConfirmation: false,
@@ -536,13 +502,77 @@ function applyCatalogAssetsToProduct(
 
   return {
     ...product,
-    image: asset.imageUrl,
+    image: isOwnProductAsset(asset.imageUrl, product.slug)
+      ? asset.imageUrl
+      : getProductImageSrc({ ...product, image: PLACEHOLDER_PRODUCT_IMAGE }),
     coaUrl: product.coaNotRequired ? '' : asset.coaUrl ?? product.coaUrl,
     coaStatus: product.coaNotRequired ? 'not_available' : asset.coaUrl ? 'available' : product.coaStatus,
   }
 }
 
-const getSupabaseCatalogRecords = cache(async (): Promise<CatalogInventoryRecord[]> => {
+const CATALOG_COPY_COLUMNS = [
+  'summary_short',
+  'summary_full',
+  'research_focus_points',
+  'listing_notes',
+  'coa_not_required',
+  'image_url',
+  'image_source',
+  'coa_url',
+  'coa_source',
+  'featured',
+  'updated_at',
+]
+
+function isMissingCatalogColumnError(message: string) {
+  const normalized = message.toLowerCase()
+  return CATALOG_COPY_COLUMNS.some((column) => normalized.includes(column))
+}
+
+function toCatalogSourceRow(row: SupabaseCatalogRow): CatalogSourceRow {
+  return {
+    slug: row.slug,
+    sku: row.sku ?? '',
+    display_name: row.display_name,
+    full_name: row.full_name,
+    strength_value: row.strength_value ?? 0,
+    unit: row.unit ?? 'mg',
+    collection: row.collection ?? 'peptides',
+    research_category: row.research_category ?? 'General Research',
+    format_type: row.format_type ?? 'vial',
+    summary_short: row.summary_short ?? '',
+    summary_full: row.summary_full ?? '',
+    research_focus_points: row.research_focus_points ?? [],
+    listing_notes: row.listing_notes ?? [],
+    coa_not_required: row.coa_not_required ?? false,
+    variant_group: row.variant_group ?? '',
+    variant_label: row.variant_label ?? '',
+    status: row.status,
+    price_vial: row.price_vial ?? '',
+    inventory_on_hand: row.inventory_on_hand,
+    low_stock_threshold: row.low_stock_threshold,
+    promo_label: row.promo_label ?? '',
+    promo_detail: row.promo_detail ?? '',
+    featured: row.featured ?? false,
+    featured_order: row.featured_order,
+    image_url: row.image_url ?? '',
+    image_source: (row.image_source as CatalogInventoryRecord['imageSource'] | undefined) ?? undefined,
+    coa_url: row.coa_url ?? null,
+    coa_source: (row.coa_source as CatalogInventoryRecord['coaSource'] | undefined) ?? undefined,
+    public_visible: row.public_visible ?? true,
+    custom_product: row.custom_product ?? false,
+    archived: row.archived ?? false,
+    updated_at: row.updated_at ?? undefined,
+  }
+}
+
+/**
+ * Reads and normalizes the shared catalog. Throws on a query error so a
+ * cached caller never stores a degraded read. The legacy column set (rows
+ * without the copy and asset columns, which also drops uploaded images) is
+ * only allowed on uncached reads, where it affects a single request.
+ */
+async function fetchSupabaseCatalogRecords(options: { allowLegacyColumns: boolean }): Promise<CatalogInventoryRecord[]> {
   const supabase = getSupabaseAdmin()
   if (!supabase) return []
 
@@ -551,75 +581,46 @@ const getSupabaseCatalogRecords = cache(async (): Promise<CatalogInventoryRecord
   const legacySelect =
     'slug, sku, display_name, full_name, strength_value, unit, collection, research_category, format_type, variant_group, variant_label, status, price_vial, inventory_on_hand, low_stock_threshold, promo_label, promo_detail, public_visible, custom_product, archived'
 
-  const fullResponse = await supabase
-    .from('catalog_products')
-    .select(fullSelect)
+  const fullResponse = await supabase.from('catalog_products').select(fullSelect)
   let data = fullResponse.data as SupabaseCatalogRow[] | null
   let error = fullResponse.error
 
-  if (
-    error &&
-    (error.message.toLowerCase().includes('summary_short') ||
-      error.message.toLowerCase().includes('summary_full') ||
-      error.message.toLowerCase().includes('research_focus_points') ||
-      error.message.toLowerCase().includes('listing_notes') ||
-      error.message.toLowerCase().includes('coa_not_required') ||
-      error.message.toLowerCase().includes('image_url') ||
-      error.message.toLowerCase().includes('image_source') ||
-      error.message.toLowerCase().includes('coa_url') ||
-      error.message.toLowerCase().includes('coa_source') ||
-      error.message.toLowerCase().includes('featured') ||
-      error.message.toLowerCase().includes('updated_at'))
-  ) {
+  if (error && options.allowLegacyColumns && isMissingCatalogColumnError(error.message)) {
     const fallback = await supabase.from('catalog_products').select(legacySelect)
     data = fallback.data as SupabaseCatalogRow[] | null
     error = fallback.error
   }
 
-  if (error || !data) return []
+  if (error) throw new Error(`catalog_products query failed: ${error.message}`)
+  if (!data) return []
 
-  return (data as SupabaseCatalogRow[])
-    .map((row) =>
-      normalizeCatalogRecord({
-        slug: row.slug,
-        sku: row.sku ?? '',
-        display_name: row.display_name,
-        full_name: row.full_name,
-        strength_value: row.strength_value ?? 0,
-        unit: row.unit ?? 'mg',
-        collection: row.collection ?? 'peptides',
-        research_category: row.research_category ?? 'General Research',
-        format_type: row.format_type ?? 'vial',
-        summary_short: row.summary_short ?? '',
-        summary_full: row.summary_full ?? '',
-        research_focus_points: row.research_focus_points ?? [],
-        listing_notes: row.listing_notes ?? [],
-        coa_not_required: row.coa_not_required ?? false,
-        variant_group: row.variant_group ?? '',
-        variant_label: row.variant_label ?? '',
-        status: row.status,
-        price_vial: row.price_vial ?? '',
-        inventory_on_hand: row.inventory_on_hand,
-        low_stock_threshold: row.low_stock_threshold,
-        promo_label: row.promo_label ?? '',
-        promo_detail: row.promo_detail ?? '',
-        featured: row.featured ?? false,
-        featured_order: row.featured_order,
-        image_url: row.image_url ?? '',
-        image_source: (row.image_source as CatalogInventoryRecord['imageSource'] | undefined) ?? undefined,
-        coa_url: row.coa_url ?? null,
-        coa_source: (row.coa_source as CatalogInventoryRecord['coaSource'] | undefined) ?? undefined,
-        public_visible: row.public_visible ?? true,
-        custom_product: row.custom_product ?? false,
-        archived: row.archived ?? false,
-        updated_at: row.updated_at ?? undefined,
-      }),
-    )
+  return data
+    .map((row) => normalizeCatalogRecord(toCatalogSourceRow(row)))
     .filter((record): record is CatalogInventoryRecord => record !== null)
+}
+
+const getCachedSupabaseCatalogRecords = cacheStorefrontRead('catalog-records', STOREFRONT_CACHE_TAGS.catalog, () =>
+  fetchSupabaseCatalogRecords({ allowLegacyColumns: false }),
+)
+
+const getSupabaseCatalogRecords = cache(async (mode: CatalogFreshness): Promise<CatalogInventoryRecord[]> => {
+  if (mode === 'storefront') {
+    try {
+      return await getCachedSupabaseCatalogRecords()
+    } catch {
+      // A failed cached read falls through to one fresh, uncached attempt.
+    }
+  }
+
+  try {
+    return await fetchSupabaseCatalogRecords({ allowLegacyColumns: true })
+  } catch {
+    return []
+  }
 })
 
-export const getSharedCatalogRecords = cache(async (): Promise<CatalogInventoryRecord[]> => {
-  const supabaseRecords = await getSupabaseCatalogRecords()
+export const getSharedCatalogRecords = cache(async (mode: CatalogFreshness = 'storefront'): Promise<CatalogInventoryRecord[]> => {
+  const supabaseRecords = await getSupabaseCatalogRecords(mode)
   if (supabaseRecords.length > 0) return supabaseRecords
 
   const sourceUrl = process.env.CATALOG_SOURCE_URL
@@ -639,14 +640,14 @@ export const getSharedCatalogRecords = cache(async (): Promise<CatalogInventoryR
   }
 })
 
-export const getSharedCatalogOverrides = cache(async () => {
-  const records = await getSharedCatalogRecords()
+export const getSharedCatalogOverrides = cache(async (mode: CatalogFreshness = 'storefront') => {
+  const records = await getSharedCatalogRecords(mode)
   return recordsToOverrides(records)
 })
 
-const getPendingSupplySlugSet = cache(async () => {
+async function fetchPendingSupplySlugs(): Promise<string[]> {
   const supabase = getSupabaseAdmin()
-  if (!supabase) return new Set<string>()
+  if (!supabase) return []
 
   const { data, error } = await supabase
     .from('inventory_purchase_logs')
@@ -654,8 +655,29 @@ const getPendingSupplySlugSet = cache(async () => {
     .eq('status', 'ordered')
     .is('inventory_applied_at', null)
 
-  if (error || !data) return new Set<string>()
-  return new Set(data.map((row) => row.slug as string))
+  if (error) throw new Error(`inventory_purchase_logs query failed: ${error.message}`)
+  return (data ?? []).map((row) => row.slug as string)
+}
+
+const getCachedPendingSupplySlugs = cacheStorefrontRead('pending-supply-slugs', STOREFRONT_CACHE_TAGS.catalog, fetchPendingSupplySlugs)
+
+const getPendingSupplySlugSet = cache(async (mode: CatalogFreshness) => {
+  try {
+    const slugs = mode === 'storefront' ? await getCachedPendingSupplySlugs() : await fetchPendingSupplySlugs()
+    return new Set(slugs)
+  } catch {
+    return new Set<string>()
+  }
+})
+
+const getCachedCatalogAssetIndex = cacheStorefrontRead('catalog-asset-index', STOREFRONT_CACHE_TAGS.catalog, fetchCatalogAssetIndex)
+
+const getCatalogAssetIndex = cache(async (mode: CatalogFreshness): Promise<CatalogAssetIndex> => {
+  try {
+    return mode === 'storefront' ? await getCachedCatalogAssetIndex() : await fetchCatalogAssetIndex()
+  } catch {
+    return { imageSlugs: [], coaSlugs: [] }
+  }
 })
 
 function applyDerivedInventoryStates(records: CatalogInventoryRecord[], pendingSupplySlugs: Set<string>) {
@@ -689,56 +711,70 @@ function applyUploadedImageUrls(records: CatalogInventoryRecord[], uploadedImage
   })
 }
 
-export const getLiveCatalogInventoryRecords = cache(async (): Promise<CatalogInventoryRecord[]> => {
-  const records = await getSharedCatalogRecords()
-  const [pendingSupplySlugs, uploadedImageSlugs] = await Promise.all([
-    getPendingSupplySlugSet(),
-    getCatalogUploadedImageSlugSet(),
-  ])
-  const baseRecords =
-    records.length > 0
-      ? records
-      : await (async () => {
-          const { getCatalogInventoryRecords } = await import('@/lib/catalog-admin')
-          return getCatalogInventoryRecords()
-      })()
+/** A record must never point at another product's photo: fall back to its own render or the placeholder. */
+function keepOwnRecordImage(record: CatalogInventoryRecord): CatalogInventoryRecord {
+  if (isOwnProductAsset(record.imageUrl, record.slug)) return record
 
-  const assetSnapshots = await getCatalogAssetSnapshots(baseRecords.map((record) => record.slug))
+  const base = PRODUCTS[record.slug]
+  const imageUrl = base ? getProductImageSrc(base) : PLACEHOLDER_PRODUCT_IMAGE
+  return {
+    ...record,
+    imageUrl,
+    imageSource: imageUrl === PLACEHOLDER_PRODUCT_IMAGE ? 'placeholder' : 'catalog',
+  }
+}
 
-  return applyUploadedImageUrls(applyDerivedInventoryStates(baseRecords, pendingSupplySlugs), uploadedImageSlugs)
-    .map((record) => ({
-      ...record,
-      coaUrl: assetSnapshots[record.slug]?.coaUrl ?? record.coaUrl,
-      coaSource: assetSnapshots[record.slug]?.coaSource ?? record.coaSource,
-    }))
-    // Withdrawn products never reach the storefront, checkout, or search, even
-    // if the shared catalog still carries them as live rows.
-    .filter((record) => !record.archived && !isDelistedCatalogEntry(record))
-    .sort((a, b) => a.displayName.localeCompare(b.displayName))
-})
+async function getBaseCatalogRecords(mode: CatalogFreshness) {
+  const records = await getSharedCatalogRecords(mode)
+  if (records.length > 0) return records
+
+  const { getCatalogInventoryRecords } = await import('@/lib/catalog-admin')
+  return getCatalogInventoryRecords()
+}
+
+export const getLiveCatalogInventoryRecords = cache(
+  async (mode: CatalogFreshness = 'storefront'): Promise<CatalogInventoryRecord[]> => {
+    const [baseRecords, pendingSupplySlugs, assetIndex] = await Promise.all([
+      getBaseCatalogRecords(mode),
+      getPendingSupplySlugSet(mode),
+      getCatalogAssetIndex(mode),
+    ])
+    const assetSnapshots = buildCatalogAssetSnapshots(baseRecords.map((record) => record.slug), assetIndex)
+
+    return applyUploadedImageUrls(applyDerivedInventoryStates(baseRecords, pendingSupplySlugs), new Set(assetIndex.imageSlugs))
+      .map((record) =>
+        keepOwnRecordImage({
+          ...record,
+          coaUrl: assetSnapshots[record.slug]?.coaUrl ?? record.coaUrl,
+          coaSource: assetSnapshots[record.slug]?.coaSource ?? record.coaSource,
+        }),
+      )
+      // Withdrawn products never reach the storefront, checkout, or search, even
+      // if the shared catalog still carries them as live rows.
+      .filter((record) => !record.archived && !isDelistedCatalogEntry(record))
+      .sort((a, b) => a.displayName.localeCompare(b.displayName))
+  },
+)
 
 export const getAdminCatalogInventoryRecords = cache(async (): Promise<CatalogInventoryRecord[]> => {
-  const records = await getSharedCatalogRecords()
-  const pendingSupplySlugs = await getPendingSupplySlugSet()
-  const baseRecords =
-    records.length > 0
-      ? records
-      : await (async () => {
-          const { getCatalogInventoryRecords } = await import('@/lib/catalog-admin')
-          return getCatalogInventoryRecords()
-        })()
-
-  const assetSnapshots = await getCatalogAssetSnapshots(baseRecords.map((record) => record.slug))
+  const [baseRecords, pendingSupplySlugs, assetIndex] = await Promise.all([
+    getBaseCatalogRecords('fresh'),
+    getPendingSupplySlugSet('fresh'),
+    getCatalogAssetIndex('fresh'),
+  ])
+  const assetSnapshots = buildCatalogAssetSnapshots(baseRecords.map((record) => record.slug), assetIndex)
 
   return applyDerivedInventoryStates(baseRecords, pendingSupplySlugs)
-    .map((record) => ({
-      ...record,
-      imageUrl: assetSnapshots[record.slug]?.imageUrl ?? record.imageUrl,
-      imageSource: assetSnapshots[record.slug]?.imageSource ?? record.imageSource,
-      coaUrl: assetSnapshots[record.slug]?.coaUrl ?? record.coaUrl,
+    .map((record) =>
+      keepOwnRecordImage({
+        ...record,
+        imageUrl: assetSnapshots[record.slug]?.imageUrl ?? record.imageUrl,
+        imageSource: assetSnapshots[record.slug]?.imageSource ?? record.imageSource,
+        coaUrl: assetSnapshots[record.slug]?.coaUrl ?? record.coaUrl,
         coaSource: assetSnapshots[record.slug]?.coaSource ?? record.coaSource,
         coaNotRequired: record.coaNotRequired,
-    }))
+      }),
+    )
     .sort((a, b) => {
       if (a.archived !== b.archived) return a.archived ? 1 : -1
       return a.displayName.localeCompare(b.displayName)
@@ -746,9 +782,11 @@ export const getAdminCatalogInventoryRecords = cache(async (): Promise<CatalogIn
 })
 
 export const getLiveCatalogProducts = cache(async (): Promise<Product[]> => {
-  const records = await getLiveCatalogInventoryRecords()
-  const overrides = await getSharedCatalogOverrides()
-  const promos = await getActiveSitePromos()
+  const [records, overrides, promos] = await Promise.all([
+    getLiveCatalogInventoryRecords('storefront'),
+    getSharedCatalogOverrides('storefront'),
+    getStorefrontPromos(),
+  ])
 
   const products = records
     .filter((record) => record.publicVisible && !record.archived)
@@ -768,7 +806,7 @@ export const getLiveCatalogProducts = cache(async (): Promise<Product[]> => {
       ),
     )
 
-  return harmonizeFamilyImages(products)
+  return products
 })
 
 export const getLiveCatalogDisplayProducts = cache(async (): Promise<Product[]> => {
@@ -825,7 +863,7 @@ export const getLiveCatalogDisplayProducts = cache(async (): Promise<Product[]> 
 })
 
 export const getLiveFeaturedProducts = cache(async (): Promise<Product[]> => {
-  const records = await getLiveCatalogInventoryRecords()
+  const records = await getLiveCatalogInventoryRecords('storefront')
   const adminFeaturedSlugs = records
     .filter((record) => record.featured && record.publicVisible && !record.archived)
     .sort((a, b) => {

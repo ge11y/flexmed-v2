@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { STOREFRONT_CACHE_TAGS, expireStorefrontCache } from '@/lib/storefront-cache'
 import {
   normalizePromoRow,
   type PromoDiscountType,
@@ -244,6 +245,7 @@ export async function POST(request: Request) {
   }
 
   if (error) return promoError(error)
+  expireStorefrontCache(STOREFRONT_CACHE_TAGS.promos)
   return NextResponse.json({ ok: true, promo: data ? normalizePromoRow(data as Record<string, unknown>) : null })
 }
 
@@ -289,6 +291,7 @@ export async function PATCH(request: Request) {
   }
 
   if (error) return promoError(error)
+  expireStorefrontCache(STOREFRONT_CACHE_TAGS.promos)
   return NextResponse.json({ ok: true, promo: data ? normalizePromoRow(data as Record<string, unknown>) : null })
 }
 
@@ -311,5 +314,6 @@ export async function DELETE(request: Request) {
   }
   const { error } = await supabase.from('site_promos').delete().eq('id', id)
   if (error) return promoError(error)
+  expireStorefrontCache(STOREFRONT_CACHE_TAGS.promos)
   return NextResponse.json({ ok: true })
 }

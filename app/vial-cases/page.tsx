@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
+import { getStorefrontPromos, getStorefrontVialCases } from '@/lib/storefront-data'
 import Image from 'next/image'
 import { VialCaseCatalog } from '@/components/VialCaseCatalog'
-import { getActiveSitePromos } from '@/lib/site-promos'
-import { getPublicVialCases } from '@/lib/vial-cases'
 
 export const metadata: Metadata = {
   title: 'Vial Cases',
@@ -13,7 +12,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export default async function VialCasesPage() {
-  const [vialCases, promos] = await Promise.all([getPublicVialCases(), getActiveSitePromos()])
+  const [vialCases, promos] = await Promise.all([getStorefrontVialCases(), getStorefrontPromos()])
 
   return (
     <div className="storefront-blue-shell" style={{ minHeight: '100vh' }}>

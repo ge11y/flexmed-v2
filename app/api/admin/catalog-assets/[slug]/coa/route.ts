@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { STOREFRONT_CACHE_TAGS, expireStorefrontCache } from '@/lib/storefront-cache'
 import { CATALOG_COA_BUCKET, ensureCatalogBucket, getCatalogCoAObjectNames } from '@/lib/catalog-assets'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
@@ -81,6 +82,7 @@ export async function POST(request: Request, context: Context) {
         })
       }
 
+      expireStorefrontCache(STOREFRONT_CACHE_TAGS.catalog)
       return NextResponse.json({ ok: true, uploads })
     }
 
@@ -94,6 +96,7 @@ export async function POST(request: Request, context: Context) {
         })
         .eq('slug', slug)
 
+      expireStorefrontCache(STOREFRONT_CACHE_TAGS.catalog)
       return NextResponse.json({ ok: true, uploadedCount: payload.uploadedCount ?? 0 })
     }
 
@@ -150,6 +153,7 @@ export async function POST(request: Request, context: Context) {
     })
     .eq('slug', slug)
 
+  expireStorefrontCache(STOREFRONT_CACHE_TAGS.catalog)
   return NextResponse.json({ ok: true, uploadedCount: files.length })
 }
 
@@ -171,6 +175,7 @@ export async function DELETE(_request: Request, context: Context) {
       })
       .eq('slug', slug)
 
+    expireStorefrontCache(STOREFRONT_CACHE_TAGS.catalog)
     return NextResponse.json({ ok: true })
   }
 
@@ -188,5 +193,6 @@ export async function DELETE(_request: Request, context: Context) {
     })
     .eq('slug', slug)
 
+  expireStorefrontCache(STOREFRONT_CACHE_TAGS.catalog)
   return NextResponse.json({ ok: true })
 }

@@ -42,7 +42,7 @@ export async function POST(request: Request) {
   }
 
   const [catalog, vialCases, promos, settings] = await Promise.all([
-    getLiveCatalogInventoryRecords(),
+    getLiveCatalogInventoryRecords('fresh'),
     getPublicVialCases(),
     getActiveSitePromos(),
     getAdminSettings(),

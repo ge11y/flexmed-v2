@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { STOREFRONT_CACHE_TAGS, expireStorefrontCache } from '@/lib/storefront-cache'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 interface InventoryCostLogInput {
@@ -180,6 +181,7 @@ export async function POST(request: Request) {
       .eq('id', insertedLog.id)
   }
 
+  expireStorefrontCache(STOREFRONT_CACHE_TAGS.catalog)
   return NextResponse.json({ ok: true })
 }
 
@@ -300,6 +302,7 @@ export async function PATCH(request: Request) {
     }
   }
 
+  expireStorefrontCache(STOREFRONT_CACHE_TAGS.catalog)
   return NextResponse.json({ ok: true })
 }
 
@@ -379,6 +382,7 @@ export async function PUT(request: Request) {
     return NextResponse.json({ ok: false, error: formatInventoryCostError(updateLogError.message), detail: updateLogError.message }, { status: 502 })
   }
 
+  expireStorefrontCache(STOREFRONT_CACHE_TAGS.catalog)
   return NextResponse.json({ ok: true, receivedUnits: totalUnits, nextInventory })
 }
 
@@ -407,5 +411,6 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ ok: false, error: formatInventoryCostError(error.message), detail: error.message }, { status: 502 })
   }
 
+  expireStorefrontCache(STOREFRONT_CACHE_TAGS.catalog)
   return NextResponse.json({ ok: true })
 }

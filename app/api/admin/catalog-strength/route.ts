@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { STOREFRONT_CACHE_TAGS, expireStorefrontCache } from '@/lib/storefront-cache'
 import type { CatalogInventoryRecord } from '@/lib/catalog-admin'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
@@ -99,6 +100,7 @@ export async function POST(request: Request) {
       const retry = await supabase.from('catalog_products').upsert(legacyRow, { onConflict: 'slug' })
       error = retry.error
       if (!error) {
+        expireStorefrontCache(STOREFRONT_CACHE_TAGS.catalog)
         return NextResponse.json({ ok: true, synced: 'supabase-legacy', slug: record.slug })
       }
     }
@@ -114,6 +116,7 @@ export async function POST(request: Request) {
       )
     }
 
+    expireStorefrontCache(STOREFRONT_CACHE_TAGS.catalog)
     return NextResponse.json({ ok: true, synced: 'supabase', slug: record.slug })
   } catch (error) {
     return NextResponse.json(

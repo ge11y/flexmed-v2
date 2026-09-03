@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { STOREFRONT_CACHE_TAGS, expireStorefrontCache } from '@/lib/storefront-cache'
 import { CATALOG_IMAGE_BUCKET, ensureCatalogBucket, getCatalogImageProxyUrl, getCatalogImageStoragePath } from '@/lib/catalog-assets'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
@@ -44,6 +45,7 @@ export async function POST(request: Request, context: Context) {
     })
     .eq('slug', slug)
 
+  expireStorefrontCache(STOREFRONT_CACHE_TAGS.catalog)
   return NextResponse.json({ ok: true })
 }
 
@@ -68,5 +70,6 @@ export async function DELETE(_request: Request, context: Context) {
     })
     .eq('slug', slug)
 
+  expireStorefrontCache(STOREFRONT_CACHE_TAGS.catalog)
   return NextResponse.json({ ok: true })
 }

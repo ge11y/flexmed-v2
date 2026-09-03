@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server'
 import { getLiveCatalogProducts } from '@/lib/catalog-live'
 import { buildPromoDisplayCopy } from '@/lib/promo-display'
-import { getActiveSitePromos } from '@/lib/site-promos'
-import { getPublicVialCases } from '@/lib/vial-cases'
+import { getStorefrontPromos, getStorefrontVialCases } from '@/lib/storefront-data'
 
 export async function GET() {
   const [promos, products, vialCases] = await Promise.all([
-    getActiveSitePromos(),
+    getStorefrontPromos(),
     getLiveCatalogProducts(),
-    getPublicVialCases(),
+    getStorefrontVialCases(),
   ])
   const displayPromos = promos.map((promo) => ({
     ...promo,

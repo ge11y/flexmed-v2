@@ -5,8 +5,8 @@ import { Suspense } from 'react'
 import { getLiveCatalogDisplayProducts, getLiveCatalogProducts, getLiveFeaturedProducts } from '@/lib/catalog-live'
 import { DELISTED_COLLECTIONS } from '@/lib/catalog-delist'
 import { buildPromoDisplayCopy } from '@/lib/promo-display'
-import { getActiveSitePromos, type SitePromoRecord } from '@/lib/site-promos'
-import { getPublicVialCases } from '@/lib/vial-cases'
+import type { SitePromoRecord } from '@/lib/site-promos'
+import { getStorefrontPromos, getStorefrontVialCases } from '@/lib/storefront-data'
 import { ProductCatalog } from '@/components/ProductCatalog'
 import { FeaturedCompounds } from '@/components/FeaturedCompounds'
 
@@ -91,9 +91,9 @@ export default async function ProductsPage({
   const [products, featuredProducts, activePromos, promoProducts, vialCases] = await Promise.all([
     getLiveCatalogDisplayProducts(),
     hasVisualShopFrame ? getLiveFeaturedProducts() : Promise.resolve([]),
-    hasVisualShopFrame ? getActiveSitePromos() : Promise.resolve([]),
+    hasVisualShopFrame ? getStorefrontPromos() : Promise.resolve([]),
     hasVisualShopFrame ? getLiveCatalogProducts() : Promise.resolve([]),
-    hasVisualShopFrame ? getPublicVialCases() : Promise.resolve([]),
+    hasVisualShopFrame ? getStorefrontVialCases() : Promise.resolve([]),
   ])
   const promoHighlights = activePromos.map((promo) => {
     const copy = buildPromoDisplayCopy(promo, { products: promoProducts, vialCases })

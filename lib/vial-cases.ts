@@ -269,7 +269,8 @@ async function hydrateStorageImagesForRecords(records: VialCaseRecord[]) {
   return Promise.all(records.map((record) => hydrateStorageImages(record)))
 }
 
-export async function getPublicVialCases(): Promise<VialCaseRecord[]> {
+/** Reads the public cases and throws on a query error, so a cached caller never stores a bad read. */
+export async function queryPublicVialCases(): Promise<VialCaseRecord[]> {
   const supabase = getSupabaseAdmin()
   if (!supabase) return DEFAULT_VIAL_CASES
 
@@ -281,8 +282,18 @@ export async function getPublicVialCases(): Promise<VialCaseRecord[]> {
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true })
 
-  if (error || !data || data.length === 0) return DEFAULT_VIAL_CASES
+  if (error) throw new Error(`vial_cases query failed: ${error.message}`)
+  if (!data || data.length === 0) return DEFAULT_VIAL_CASES
   return hydrateStorageImagesForRecords((data as VialCaseRow[]).map(mapVialCaseRow))
+}
+
+/** Fresh read, used by checkout and order submission. Pages use getStorefrontVialCases(). */
+export async function getPublicVialCases(): Promise<VialCaseRecord[]> {
+  try {
+    return await queryPublicVialCases()
+  } catch {
+    return DEFAULT_VIAL_CASES
+  }
 }
 
 export async function getAdminVialCases(): Promise<{ cases: VialCaseRecord[]; error?: string } > {
