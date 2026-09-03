@@ -7,7 +7,7 @@ import { getLiveProductBySlug, getLiveProductVariants } from '@/lib/catalog-live
 import { isDelistedProductSlug } from '@/lib/catalog-delist'
 import { isLowStock } from '@/lib/inventory-state'
 import { getProductCoALink, getTestingRecordsForProduct, hasPublishedCoA } from '@/lib/data-testing'
-import { getCatalogCoAObjectNames } from '@/lib/catalog-assets'
+import { getStorefrontCoAObjectNames } from '@/lib/storefront-data'
 import { ProductImage } from '@/components/ProductImage'
 import { ProductPurchasePanel } from '@/components/ProductPurchasePanel'
 import {
@@ -123,7 +123,7 @@ export default async function ProductDetailPage({ params }: Props) {
   if (!product || product.publicVisible === false) notFound()
 
   const [uploadedCoaObjectNames, familyVariants] = await Promise.all([
-    getCatalogCoAObjectNames(slug),
+    getStorefrontCoAObjectNames(slug),
     getLiveProductVariants(product),
   ])
   const uploadedCoaHref = uploadedCoaObjectNames.length > 0 ? `/coa/${slug}` : null

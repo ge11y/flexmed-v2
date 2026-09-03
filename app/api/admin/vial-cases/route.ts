@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { STOREFRONT_CACHE_TAGS, expireStorefrontCache } from '@/lib/storefront-cache'
 import { getAdminVialCases, parseVialCasePrice, type VialCaseImage } from '@/lib/vial-cases'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
@@ -136,9 +137,11 @@ export async function POST(request: Request) {
       .select('id, name')
       .single()
     if (fallbackError) return NextResponse.json({ ok: false, error: fallbackError.message }, { status: 502 })
+    expireStorefrontCache(STOREFRONT_CACHE_TAGS.vialCases)
     return NextResponse.json({ ok: true, case: fallbackData })
   }
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 502 })
+  expireStorefrontCache(STOREFRONT_CACHE_TAGS.vialCases)
   return NextResponse.json({ ok: true, case: data })
 }
 
@@ -170,6 +173,7 @@ export async function PATCH(request: Request) {
     )
     const failed = results.find((result) => result.error)
     if (failed?.error) return NextResponse.json({ ok: false, error: failed.error.message }, { status: 502 })
+    expireStorefrontCache(STOREFRONT_CACHE_TAGS.vialCases)
     return NextResponse.json({ ok: true })
   }
 
@@ -195,9 +199,11 @@ export async function PATCH(request: Request) {
       .select('id, name')
       .single()
     if (fallbackError) return NextResponse.json({ ok: false, error: fallbackError.message }, { status: 502 })
+    expireStorefrontCache(STOREFRONT_CACHE_TAGS.vialCases)
     return NextResponse.json({ ok: true, case: fallbackData })
   }
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 502 })
+  expireStorefrontCache(STOREFRONT_CACHE_TAGS.vialCases)
   return NextResponse.json({ ok: true, case: data })
 }
 
@@ -221,5 +227,6 @@ export async function DELETE(request: Request) {
     .eq('id', payload.id)
 
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 502 })
+  expireStorefrontCache(STOREFRONT_CACHE_TAGS.vialCases)
   return NextResponse.json({ ok: true })
 }

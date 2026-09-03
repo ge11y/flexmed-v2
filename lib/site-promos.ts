@@ -133,20 +133,34 @@ export function getPromoLifecycle(promo: SitePromoRecord, now = new Date()) {
   return 'live' as const
 }
 
-export async function getSitePromos(options?: { activeOnly?: boolean }) {
+/** Reads promos and throws on a query error, so a cached caller never stores a bad read. */
+export async function querySitePromos(options?: { activeOnly?: boolean }): Promise<SitePromoRecord[]> {
   const supabase = getSupabaseAdmin()
-  if (!supabase) return [] as SitePromoRecord[]
+  if (!supabase) return []
 
   let query = supabase.from('site_promos').select('*').order('updated_at', { ascending: false })
   if (options?.activeOnly) query = query.eq('is_active', true)
 
   const { data, error } = await query
-  if (error || !data) return []
+  if (error) throw new Error(`site_promos query failed: ${error.message}`)
 
-  const promos = (data as Record<string, unknown>[]).map(normalizePromoRow)
+  const promos = ((data ?? []) as Record<string, unknown>[]).map(normalizePromoRow)
   return options?.activeOnly ? promos.filter((promo) => isPromoActiveNow(promo)) : promos
 }
 
+export async function getSitePromos(options?: { activeOnly?: boolean }) {
+  try {
+    return await querySitePromos(options)
+  } catch {
+    return [] as SitePromoRecord[]
+  }
+}
+
+export function queryActiveSitePromos() {
+  return querySitePromos({ activeOnly: true })
+}
+
+/** Fresh read, used by checkout and order submission. Pages use getStorefrontPromos(). */
 export async function getActiveSitePromos() {
   return getSitePromos({ activeOnly: true })
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { STOREFRONT_CACHE_TAGS, expireStorefrontCache } from '@/lib/storefront-cache'
 import { ensurePromoImageBucket, getPromoImageProxyUrl, getPromoImageStoragePath, PROMO_IMAGE_BUCKET } from '@/lib/promo-assets'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
@@ -62,6 +63,7 @@ export async function POST(request: Request, context: Context) {
   }
   if (updateError) return NextResponse.json({ ok: false, error: updateError.message }, { status: 502 })
 
+  expireStorefrontCache(STOREFRONT_CACHE_TAGS.promos)
   return NextResponse.json({ ok: true, imageUrl })
 }
 
@@ -92,5 +94,6 @@ export async function DELETE(_request: Request, context: Context) {
   }
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 502 })
 
+  expireStorefrontCache(STOREFRONT_CACHE_TAGS.promos)
   return NextResponse.json({ ok: true })
 }

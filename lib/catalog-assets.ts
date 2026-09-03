@@ -61,31 +61,32 @@ export async function ensureCatalogBucket(bucket: string, options?: { public?: b
   })
 }
 
-async function hasStorageObject(bucket: string, slug: string, fileName: string) {
-  const supabase = getSupabaseAdmin()
-  if (!supabase) return false
-
-  const { data, error } = await supabase.storage.from(bucket).list(slug, { limit: 20 })
-  if (error) return false
-  return Boolean(data?.some((entry) => entry.name === fileName))
-}
-
 function sortCoAPageNames(names: string[]) {
   return [...names].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }))
 }
 
-export async function getCatalogCoAObjectNames(slug: string) {
+/** Lists a product's uploaded CoA pages and throws on a storage error, so a cached caller never stores a bad read. */
+export async function queryCatalogCoAObjectNames(slug: string): Promise<string[]> {
   const supabase = getSupabaseAdmin()
   if (!supabase) return []
 
   const { data, error } = await supabase.storage.from(CATALOG_COA_BUCKET).list(slug, { limit: 20 })
-  if (error || !data) return []
+  if (error) throw new Error(`CoA listing failed for ${slug}: ${error.message}`)
 
-  const names = data
+  const names = (data ?? [])
     .map((entry) => entry.name)
     .filter((name) => name === 'coa' || name.toLowerCase().startsWith('coa.') || name.toLowerCase().startsWith('page-'))
 
   return sortCoAPageNames(names)
+}
+
+/** Fresh read, used by the download route and the admin. Pages use getStorefrontCoAObjectNames(). */
+export async function getCatalogCoAObjectNames(slug: string) {
+  try {
+    return await queryCatalogCoAObjectNames(slug)
+  } catch {
+    return []
+  }
 }
 
 export async function getCatalogCoAObjectName(slug: string) {
@@ -93,36 +94,53 @@ export async function getCatalogCoAObjectName(slug: string) {
   return objectNames[0] ?? null
 }
 
-export async function getCatalogAssetSnapshot(slug: string): Promise<CatalogAssetSnapshot> {
-  const product = PRODUCTS[slug]
-  const fallbackImage = product ? getProductImageSrc(product) : '/products/front.png'
-  const fallbackCoa = product ? getProductCoALink(product) : null
-
-  const [imageUploaded, coaUploaded] = await Promise.all([
-    hasStorageObject(CATALOG_IMAGE_BUCKET, slug, 'front'),
-    getCatalogCoAObjectNames(slug).then((names) => names.length > 0),
-  ])
-
-  return {
-    slug,
-    imageUrl: imageUploaded ? getCatalogImageProxyUrl(slug) : fallbackImage,
-    imageSource: imageUploaded ? 'uploaded' : product && isPlaceholderProductImage(product) ? 'placeholder' : 'catalog',
-    coaUrl: coaUploaded ? getCatalogCoAViewerUrl(slug) : fallbackCoa,
-    coaSource: coaUploaded ? 'uploaded' : fallbackCoa ? 'packet' : 'none',
-  }
+export interface CatalogAssetIndex {
+  /** Product slugs with an uploaded front image (a folder in the image bucket). */
+  imageSlugs: string[]
+  /** Product slugs with uploaded CoA pages (a folder in the CoA bucket). */
+  coaSlugs: string[]
 }
 
-export async function getCatalogAssetSnapshots(slugs: string[]) {
-  const entries = await Promise.all(slugs.map(async (slug) => [slug, await getCatalogAssetSnapshot(slug)] as const))
-  return Object.fromEntries(entries)
-}
-
-export async function getCatalogUploadedImageSlugSet() {
+/**
+ * One listing per bucket tells us which products have uploads. This used to
+ * be two listings per product on every page render. Throws on failure so a
+ * cached caller never stores an empty index.
+ */
+export async function fetchCatalogAssetIndex(): Promise<CatalogAssetIndex> {
   const supabase = getSupabaseAdmin()
-  if (!supabase) return new Set<string>()
+  if (!supabase) return { imageSlugs: [], coaSlugs: [] }
 
-  const { data, error } = await supabase.storage.from(CATALOG_IMAGE_BUCKET).list('', { limit: 1000 })
-  if (error || !data) return new Set<string>()
+  const [images, coas] = await Promise.all([
+    supabase.storage.from(CATALOG_IMAGE_BUCKET).list('', { limit: 1000 }),
+    supabase.storage.from(CATALOG_COA_BUCKET).list('', { limit: 1000 }),
+  ])
+  if (images.error) throw new Error(`catalog image listing failed: ${images.error.message}`)
+  if (coas.error) throw new Error(`catalog CoA listing failed: ${coas.error.message}`)
 
-  return new Set(data.map((entry) => entry.name).filter(Boolean))
+  const names = (entries: { name: string }[] | null) => (entries ?? []).map((entry) => entry.name).filter(Boolean)
+  return { imageSlugs: names(images.data), coaSlugs: names(coas.data) }
+}
+
+export function buildCatalogAssetSnapshots(slugs: string[], index: CatalogAssetIndex): Record<string, CatalogAssetSnapshot> {
+  const imageSlugs = new Set(index.imageSlugs)
+  const coaSlugs = new Set(index.coaSlugs)
+
+  return Object.fromEntries(
+    slugs.map((slug) => {
+      const product = PRODUCTS[slug]
+      const fallbackImage = product ? getProductImageSrc(product) : '/products/front.png'
+      const fallbackCoa = product ? getProductCoALink(product) : null
+      const imageUploaded = imageSlugs.has(slug)
+      const coaUploaded = coaSlugs.has(slug)
+
+      const snapshot: CatalogAssetSnapshot = {
+        slug,
+        imageUrl: imageUploaded ? getCatalogImageProxyUrl(slug) : fallbackImage,
+        imageSource: imageUploaded ? 'uploaded' : product && isPlaceholderProductImage(product) ? 'placeholder' : 'catalog',
+        coaUrl: coaUploaded ? getCatalogCoAViewerUrl(slug) : fallbackCoa,
+        coaSource: coaUploaded ? 'uploaded' : fallbackCoa ? 'packet' : 'none',
+      }
+      return [slug, snapshot] as const
+    }),
+  )
 }

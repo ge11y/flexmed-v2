@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { STOREFRONT_CACHE_TAGS, expireStorefrontCache } from '@/lib/storefront-cache'
 import { ensureVialCaseImageBucket, getVialCaseImageProxyUrl, getVialCaseImageStoragePath, VIAL_CASE_IMAGE_BUCKET } from '@/lib/vial-case-assets'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import type { VialCaseImage } from '@/lib/vial-cases'
@@ -147,9 +148,11 @@ export async function POST(request: Request, context: Context) {
       })
       .eq('id', id)
     if (fallbackUpdateError) return NextResponse.json({ ok: false, error: fallbackUpdateError.message }, { status: 502 })
+    expireStorefrontCache(STOREFRONT_CACHE_TAGS.vialCases)
     return NextResponse.json({ ok: true, imageUrl: primaryImage?.url, images: nextGallery })
   }
   if (updateError) return NextResponse.json({ ok: false, error: updateError.message }, { status: 502 })
+  expireStorefrontCache(STOREFRONT_CACHE_TAGS.vialCases)
   return NextResponse.json({ ok: true, imageUrl: primaryImage?.url, images: nextGallery })
 }
 
@@ -208,8 +211,10 @@ export async function DELETE(request: Request, context: Context) {
       })
       .eq('id', id)
     if (fallbackError) return NextResponse.json({ ok: false, error: fallbackError.message }, { status: 502 })
+    expireStorefrontCache(STOREFRONT_CACHE_TAGS.vialCases)
     return NextResponse.json({ ok: true })
   }
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 502 })
+  expireStorefrontCache(STOREFRONT_CACHE_TAGS.vialCases)
   return NextResponse.json({ ok: true })
 }
