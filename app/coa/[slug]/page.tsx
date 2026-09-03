@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { getPrimaryPublishedCoAPage, getPrimaryPublishedCoAUrl } from '@/lib/data-testing'
 import { PRODUCTS } from '@/lib/data-products'
 import { CoAPageCanvas } from '@/components/CoAPageCanvas'
-import { getCatalogCoAObjectNames } from '@/lib/catalog-assets'
+import { getStorefrontCoAObjectNames } from '@/lib/storefront-data'
 import { getLiveProductBySlug, getLiveProductVariants } from '@/lib/catalog-live'
 import { isDelistedProductSlug } from '@/lib/catalog-delist'
 
@@ -47,7 +47,7 @@ export default async function ProductCoAPage({ params }: Props) {
   let effectiveCoaProduct = product
   let sourceUrl = getPrimaryPublishedCoAUrl(slug)
   let pageNumber = getPrimaryPublishedCoAPage(slug)
-  let uploadedCoaObjectNames = await getCatalogCoAObjectNames(slug)
+  let uploadedCoaObjectNames = await getStorefrontCoAObjectNames(slug)
 
   if ((!sourceUrl || !pageNumber) && uploadedCoaObjectNames.length === 0 && product) {
     const variants = await getLiveProductVariants(product)
@@ -56,7 +56,7 @@ export default async function ProductCoAPage({ params }: Props) {
 
       const variantSourceUrl = getPrimaryPublishedCoAUrl(variant.slug)
       const variantPageNumber = getPrimaryPublishedCoAPage(variant.slug)
-      const variantUploadedCoaObjectNames = await getCatalogCoAObjectNames(variant.slug)
+      const variantUploadedCoaObjectNames = await getStorefrontCoAObjectNames(variant.slug)
       if ((!variantSourceUrl || !variantPageNumber) && variantUploadedCoaObjectNames.length === 0) continue
 
       effectiveCoaSlug = variant.slug

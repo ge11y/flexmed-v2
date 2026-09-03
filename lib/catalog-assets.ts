@@ -65,18 +65,28 @@ function sortCoAPageNames(names: string[]) {
   return [...names].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }))
 }
 
-export async function getCatalogCoAObjectNames(slug: string) {
+/** Lists a product's uploaded CoA pages and throws on a storage error, so a cached caller never stores a bad read. */
+export async function queryCatalogCoAObjectNames(slug: string): Promise<string[]> {
   const supabase = getSupabaseAdmin()
   if (!supabase) return []
 
   const { data, error } = await supabase.storage.from(CATALOG_COA_BUCKET).list(slug, { limit: 20 })
-  if (error || !data) return []
+  if (error) throw new Error(`CoA listing failed for ${slug}: ${error.message}`)
 
-  const names = data
+  const names = (data ?? [])
     .map((entry) => entry.name)
     .filter((name) => name === 'coa' || name.toLowerCase().startsWith('coa.') || name.toLowerCase().startsWith('page-'))
 
   return sortCoAPageNames(names)
+}
+
+/** Fresh read, used by the download route and the admin. Pages use getStorefrontCoAObjectNames(). */
+export async function getCatalogCoAObjectNames(slug: string) {
+  try {
+    return await queryCatalogCoAObjectNames(slug)
+  } catch {
+    return []
+  }
 }
 
 export async function getCatalogCoAObjectName(slug: string) {

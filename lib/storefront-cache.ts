@@ -27,7 +27,7 @@ export const STOREFRONT_CACHE_SECONDS = 60
  * Wraps a loader in the cross-request Data Cache. The loader must throw on
  * failure rather than return a degraded value, so a bad read is never stored.
  */
-export function cacheStorefrontRead<T>(key: string, tag: string, load: () => Promise<T>) {
+export function cacheStorefrontRead<A extends unknown[], T>(key: string, tag: string, load: (...args: A) => Promise<T>) {
   return unstable_cache(load, ['storefront', key], { tags: [tag], revalidate: STOREFRONT_CACHE_SECONDS })
 }
 
