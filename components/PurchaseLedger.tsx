@@ -125,6 +125,7 @@ export function PurchaseLedger({ slug, productName, strengthLabel, onHandNow, ro
 
   return (
     <div
+      data-purchase-ledger={slug}
       style={{
         display: 'grid',
         gap: '10px',
