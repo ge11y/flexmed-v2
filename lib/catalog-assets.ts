@@ -61,8 +61,64 @@ export async function ensureCatalogBucket(bucket: string, options?: { public?: b
   })
 }
 
-function sortCoAPageNames(names: string[]) {
-  return [...names].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }))
+export interface CoAObjectEntry {
+  name: string
+  createdAt?: string | null
+}
+
+/** Uploads of several files in one request share a created_at window and stay in page order. */
+const COA_BATCH_WINDOW_MS = 2 * 60 * 1000
+
+function isCoAObjectName(name: string) {
+  const normalized = name.toLowerCase()
+  return normalized === 'coa' || normalized.startsWith('coa.') || normalized.startsWith('page-')
+}
+
+export function parseCoAPageNumber(name: string) {
+  const pageMatch = name.match(/^page-(\d+)/i)
+  return pageMatch ? Number(pageMatch[1]) : 0
+}
+
+/** Next `page-NN` index. Uploads still append; display order is newest-first separately. */
+export function getNextCoAPageNumber(names: string[]) {
+  return names.reduce((max, name) => Math.max(max, parseCoAPageNumber(name)), 0) + 1
+}
+
+/**
+ * Newest CoA first. Files uploaded together (same ~2 minute window) stay in
+ * ascending page order so a multi-page certificate still reads 1, 2, 3.
+ * Sequential single-file uploads over time each form their own batch.
+ */
+export function sortCoAObjectEntriesNewestFirst(entries: CoAObjectEntry[]) {
+  const items = entries.map((entry) => ({
+    name: entry.name,
+    page: parseCoAPageNumber(entry.name),
+    createdAt: entry.createdAt ? Date.parse(entry.createdAt) : Number.NaN,
+  }))
+
+  items.sort(
+    (a, b) => a.page - b.page || a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }),
+  )
+
+  const batches: typeof items[] = []
+  for (const item of items) {
+    const currentBatch = batches[batches.length - 1]
+    const previous = currentBatch?.[currentBatch.length - 1]
+    const sameUploadWindow =
+      previous != null &&
+      Number.isFinite(item.createdAt) &&
+      Number.isFinite(previous.createdAt) &&
+      Math.abs(item.createdAt - previous.createdAt) <= COA_BATCH_WINDOW_MS
+
+    if (currentBatch && sameUploadWindow) {
+      currentBatch.push(item)
+    } else {
+      batches.push([item])
+    }
+  }
+
+  batches.reverse()
+  return batches.flatMap((batch) => batch.map((item) => item.name))
 }
 
 /** Lists a product's uploaded CoA pages and throws on a storage error, so a cached caller never stores a bad read. */
@@ -70,14 +126,17 @@ export async function queryCatalogCoAObjectNames(slug: string): Promise<string[]
   const supabase = getSupabaseAdmin()
   if (!supabase) return []
 
-  const { data, error } = await supabase.storage.from(CATALOG_COA_BUCKET).list(slug, { limit: 20 })
+  const { data, error } = await supabase.storage.from(CATALOG_COA_BUCKET).list(slug, {
+    limit: 100,
+    sortBy: { column: 'created_at', order: 'desc' },
+  })
   if (error) throw new Error(`CoA listing failed for ${slug}: ${error.message}`)
 
-  const names = (data ?? [])
-    .map((entry) => entry.name)
-    .filter((name) => name === 'coa' || name.toLowerCase().startsWith('coa.') || name.toLowerCase().startsWith('page-'))
+  const entries = (data ?? [])
+    .filter((entry) => isCoAObjectName(entry.name))
+    .map((entry) => ({ name: entry.name, createdAt: entry.created_at }))
 
-  return sortCoAPageNames(names)
+  return sortCoAObjectEntriesNewestFirst(entries)
 }
 
 /** Fresh read, used by the download route and the admin. Pages use getStorefrontCoAObjectNames(). */
@@ -89,6 +148,7 @@ export async function getCatalogCoAObjectNames(slug: string) {
   }
 }
 
+/** Primary CoA object: first page of the newest uploaded certificate. */
 export async function getCatalogCoAObjectName(slug: string) {
   const objectNames = await getCatalogCoAObjectNames(slug)
   return objectNames[0] ?? null

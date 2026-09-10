@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test:promos": "node --experimental-strip-types --experimental-loader ./scripts/typescript-alias-loader.mjs ./scripts/test-promo-pricing.ts",
     "test:images": "node --experimental-strip-types --experimental-loader ./scripts/typescript-alias-loader.mjs ./scripts/test-product-images.ts",
-    "test:ledger": "node --experimental-strip-types --experimental-loader ./scripts/typescript-alias-loader.mjs ./scripts/test-purchase-ledger.ts"
+    "test:ledger": "node --experimental-strip-types --experimental-loader ./scripts/typescript-alias-loader.mjs ./scripts/test-purchase-ledger.ts",
+    "test:coa": "node --experimental-strip-types --experimental-loader ./scripts/typescript-alias-loader.mjs ./scripts/test-coa-order.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.1",
