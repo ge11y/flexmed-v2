@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { STOREFRONT_CACHE_TAGS, expireStorefrontCache } from '@/lib/storefront-cache'
-import { CATALOG_COA_BUCKET, ensureCatalogBucket, getCatalogCoAObjectNames } from '@/lib/catalog-assets'
+import { CATALOG_COA_BUCKET, ensureCatalogBucket, getCatalogCoAObjectNames, getNextCoAPageNumber } from '@/lib/catalog-assets'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 interface Context {
@@ -54,11 +54,11 @@ export async function POST(request: Request, context: Context) {
       })
 
       const existingObjectNames = await getCatalogCoAObjectNames(slug)
-      const existingPageCount = existingObjectNames.length
+      const nextPageNumber = getNextCoAPageNumber(existingObjectNames)
       const uploads = []
 
       for (const [index, file] of files.entries()) {
-        const objectName = getCoAObjectName(file.name || `page-${index + 1}.pdf`, existingPageCount + index + 1)
+        const objectName = getCoAObjectName(file.name || `page-${index + 1}.pdf`, nextPageNumber + index)
         const path = `${slug}/${objectName}`
         const { data, error } = await supabase.storage.from(CATALOG_COA_BUCKET).createSignedUploadUrl(path, {
           upsert: true,
@@ -115,7 +115,7 @@ export async function POST(request: Request, context: Context) {
   })
 
   const existingObjectNames = await getCatalogCoAObjectNames(slug)
-  const existingPageCount = existingObjectNames.length
+  const nextPageNumber = getNextCoAPageNumber(existingObjectNames)
 
   for (const [index, file] of files.entries()) {
     if (!SUPPORTED_COA_TYPES.includes(file.type)) {
@@ -129,7 +129,7 @@ export async function POST(request: Request, context: Context) {
       )
     }
 
-    const pageNumber = existingPageCount + index + 1
+    const pageNumber = nextPageNumber + index
     const objectName = getCoAObjectName(file.name, pageNumber)
     const { error } = await supabase.storage.from(CATALOG_COA_BUCKET).upload(`${slug}/${objectName}`, file, {
       upsert: true,

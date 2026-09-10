@@ -97,7 +97,7 @@ export default async function ProductCoAPage({ params }: Props) {
             <h1 style={{ margin: 0, fontSize: 'clamp(26px, 4vw, 40px)' }}>{displayName}</h1>
             <div style={{ color: 'var(--text-secondary)' }}>
               {uploadedCoaFiles.length > 0
-                ? `Showing ${uploadedCoaFiles.length} uploaded CoA page${uploadedCoaFiles.length === 1 ? '' : 's'} for this product.${sourceDescription}`
+                ? `Showing ${uploadedCoaFiles.length} uploaded CoA page${uploadedCoaFiles.length === 1 ? '' : 's'} for this product, newest first.${sourceDescription}`
                 : `Showing only the matched certificate page for this product.${sourceDescription}`}
             </div>
           </div>
